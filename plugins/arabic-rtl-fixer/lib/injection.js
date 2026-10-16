@@ -127,7 +127,24 @@
                 if (!res.ok) return;
                 let html = await res.text();
                 const safeSrc = JSON.stringify(src).replace(/</g, '\\u003c');
+
+                // Extract host's active CSS variables so the sidecar matches instantly with no white flash
+                const hostComputed = window.getComputedStyle(document.documentElement);
+                const themeKeys = [
+                    '--background', '--foreground', '--card', '--border',
+                    '--primary', '--primary-foreground', '--secondary',
+                    '--secondary-foreground', '--muted', '--muted-foreground',
+                    '--error', '--success', '--warning'
+                ];
+                let themeVars = ':root { color-scheme: dark; ';
+                for (let i = 0; i < themeKeys.length; i++) {
+                    const val = hostComputed.getPropertyValue(themeKeys[i])?.trim();
+                    if (val) themeVars += `${themeKeys[i]}: ${val}; `;
+                }
+                themeVars += '}';
+
                 const boot = `<base href="${url.protocol}//${url.host}/">` +
+                    `<style id="agy-host-theme">${themeVars}</style>` +
                     `<script>window.__SIDECAR_URL = ${safeSrc};</` + `script>`;
                 html = /<head[^>]*>/i.test(html)
                     ? html.replace(/<head[^>]*>/i, (m) => m + boot)

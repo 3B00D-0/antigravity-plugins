@@ -7,9 +7,23 @@
   <!-- Antigravity sidecar bridge: applies the host theme's CSS variables. -->
   <script src="/preload.js"></script>
   <style>
-    /* Fallbacks mirror Antigravity's dark theme; the host overrides them via theme-change. */
+    /* Native Antigravity 2.0 Dark Theme Defaults (prevents white flash/glitch) */
     :root {
-      color-scheme: light dark;
+      color-scheme: dark;
+      --background: #101010;
+      --foreground: #cccccc;
+      --card: #141414;
+      --border: rgba(255, 255, 255, 0.08);
+      --primary: #007acc;
+      --primary-foreground: #ffffff;
+      --secondary: #282828;
+      --secondary-foreground: #cccccc;
+      --muted: #1c1c1c;
+      --muted-foreground: #888888;
+      --error: #f14c4c;
+      --success: #3fb950;
+      --warning: #d29922;
+
       --_bg: var(--background, #101010);
       --_fg: var(--foreground, #cccccc);
       --_card: var(--card, color-mix(in srgb, #ffffff 5%, #101010));
@@ -28,17 +42,34 @@
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
 
-    html, body {
-      margin: 0;
-      background: var(--_bg);
-      color: var(--_fg);
+    html {
+      color-scheme: dark;
+      background-color: #101010 !important;
+      background: var(--_bg) !important;
+      color: var(--_fg) !important;
+    }
+
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      color-scheme: dark;
+      background-color: #101010 !important;
+      background: var(--_bg) !important;
+      color: var(--_fg) !important;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 13px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
 
-    .page { padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+    .page {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 640px;
+      background-color: var(--_bg);
+    }
 
     /* Header */
     .header { display: flex; align-items: center; gap: 10px; }

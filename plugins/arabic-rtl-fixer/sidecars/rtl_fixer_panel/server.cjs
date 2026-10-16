@@ -94,7 +94,12 @@ function readPreloadBridge() {
     const appData = process.env.ANTIGRAVITY_APP_DATA_DIR || path.join(os.homedir(), '.gemini', 'antigravity');
     const candidate = path.join(appData, 'lib', 'node_modules', 'sidecar_sdk', 'preload.js');
     try {
-        return fs.readFileSync(candidate, 'utf8');
+        let code = fs.readFileSync(candidate, 'utf8');
+        // Prevent jarring white flash if host theme event is delayed:
+        // Antigravity's default theme is dark (#101010), not #fafafa.
+        return code
+            .replace(/#fafafa/g, '#101010')
+            .replace(/#333/g, '#cccccc');
     } catch (_) {
         // Minimal fallback: keep the panel in sync with the host theme.
         return `window.addEventListener('message', (e) => {
