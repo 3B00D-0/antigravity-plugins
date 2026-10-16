@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Arabic / RTL Formatting Fix</title>
+  <style>
+    :root {
+      color-scheme: dark light;
+      --bg: #141416;
+      --card: #1e1f23;
+      --border: #2e3038;
+      --text: #ececf1;
+      --muted: #9ea1b0;
+      --accent: #3b82f6;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    h2 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .badge.inactive {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    p {
+      margin: 6px 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button {
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.9; }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+    }
+    .preview-box {
+      background: #101114;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 10px;
+      color: var(--text);
+      font-size: 13.5px;
+      direction: rtl;
+      unicode-bidi: plaintext;
+      text-align: right;
+    }
+    .preview-box ul {
+      padding-right: 20px;
+      margin: 8px 0;
+    }
+    code {
+      background: #272930;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+      direction: ltr;
+      unicode-bidi: isolate;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>
+      <span>Arabic / RTL Formatting Fix</span>
+      <span id="status-badge" class="badge active">Checking...</span>
+    </h2>
+    <p id="status-desc">Automatically aligns mixed Arabic &amp; English paragraphs, numbered lists, and inline parentheses in Antigravity 2.0.</p>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="applyFix()">Re-Apply RTL Fix</button>
+      <button class="btn-secondary" onclick="restoreFix()">Restore Original</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Live RTL / BiDi Preview</h2>
+    <div class="preview-box" dir="rtl">
+      <strong>1. نظرة عامة على معمارية النظام (System Architecture):</strong>
+      <ul>
+        <li>يعتمد التطبيق على واجهة برمجة تطبيقات (REST API) مبنية باستخدام <code>Node.js + TypeScript</code>.</li>
+        <li>مزامنة البيانات محلياً عبر (WebSockets) لتقليل زمن الاستجابة بنسبة 60% إلى 80%.</li>
+        <li>عزل الأكواد البرمجية (Code Blocks) لتبقى دائماً من اليسار إلى اليمين <code>direction: ltr</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const token = new URLSearchParams(window.location.search).get('token') || '';
+    function apiUrl(path) {
+      return token ? `${path}?token=${encodeURIComponent(token)}` : path;
+    }
+    async function refreshStatus() {
+      try {
+        const res = await fetch(apiUrl('/api/status'));
+        const data = await res.json();
+        const badge = document.getElementById('status-badge');
+        const desc = document.getElementById('status-desc');
+        if (data.installed) {
+          badge.textContent = 'Active & Patched';
+          badge.className = 'badge active';
+          desc.textContent = 'RTL/BiDi patch is active in resources/app.asar.';
+        } else {
+          badge.textContent = 'Not Patched';
+          badge.className = 'badge inactive';
+          desc.textContent = 'Click "Re-Apply RTL Fix" to patch Antigravity 2.0.';
+        }
+      } catch (e) {}
+    }
+    async function applyFix() {
+      await fetch(apiUrl('/api/apply'), { method: 'POST' });
+      await refreshStatus();
+    }
+    async function restoreFix() {
+      await fetch(apiUrl('/api/restore'), { method: 'POST' });
+      await refreshStatus();
+    }
+    refreshStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "args": [
+    "server.cjs"
+  ],
+  "command": "node",
+  "description": "Control panel and auto-patcher for Arabic & English (RTL/BiDi) formatting in Antigravity 2.0",
+  "display_name": "Arabic / RTL Formatting Fix",
+  "has_web_ui": true,
+  "restart_policy": "always",
+  "ui_config": {
+    "display_name": "Arabic / RTL Formatting Fix",
+    "views": [
+      {
+        "entrypoint": "SIDECAR_UI_ENTRYPOINT_AUX_PANE",
+        "path": "/ui.html",
+        "title": "Arabic / RTL Formatting Fix"
+      }
+    ]
+  }
+}
