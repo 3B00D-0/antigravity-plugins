@@ -5,13 +5,20 @@ echo   Antigravity 2.0 - Restore Original Unpatched Files
 echo ========================================================
 echo.
 
-where python >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    python "%~dp0patch_antigravity_rtl.py" --restore
+set AGY_EXE=%LOCALAPPDATA%\Programs\antigravity\Antigravity.exe
+if not exist "%AGY_EXE%" set AGY_EXE=%LOCALAPPDATA%\antigravity\Antigravity.exe
+
+if exist "%AGY_EXE%" (
+    set ELECTRON_RUN_AS_NODE=1
+    "%AGY_EXE%" "%~dp0patch_antigravity_rtl.js" --restore
+    set ELECTRON_RUN_AS_NODE=
 ) else (
-    echo Restoring from backups...
-    copy /Y "%LOCALAPPDATA%\Programs\antigravity\resources\app.asar.bak" "%LOCALAPPDATA%\Programs\antigravity\resources\app.asar"
-    copy /Y "%LOCALAPPDATA%\Programs\antigravity\Antigravity.exe.bak" "%LOCALAPPDATA%\Programs\antigravity\Antigravity.exe"
+    where python >nul 2>nul
+    if %ERRORLEVEL% EQU 0 (
+        python "%~dp0patch_antigravity_rtl.py" --restore
+    ) else (
+        echo [!] Could not locate Antigravity.exe or Python.
+    )
 )
 
 echo.

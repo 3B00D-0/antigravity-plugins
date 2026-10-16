@@ -5,14 +5,20 @@ echo   Antigravity 2.0 - Arabic / English RTL Formatting Fix
 echo ========================================================
 echo.
 
-REM Check if Python is available, otherwise use built-in PowerShell/Node
-where python >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-    python "%~dp0patch_antigravity_rtl.py"
-) else (
-    echo [!] Python not found on PATH, trying Antigravity's built-in Node runtime...
+set AGY_EXE=%LOCALAPPDATA%\Programs\antigravity\Antigravity.exe
+if not exist "%AGY_EXE%" set AGY_EXE=%LOCALAPPDATA%\antigravity\Antigravity.exe
+
+if exist "%AGY_EXE%" (
     set ELECTRON_RUN_AS_NODE=1
-    "%LOCALAPPDATA%\Programs\antigravity\Antigravity.exe" "%~dp0patch_antigravity_rtl.js"
+    "%AGY_EXE%" "%~dp0patch_antigravity_rtl.js"
+    set ELECTRON_RUN_AS_NODE=
+) else (
+    where python >nul 2>nul
+    if %ERRORLEVEL% EQU 0 (
+        python "%~dp0patch_antigravity_rtl.py"
+    ) else (
+        echo [!] Could not locate Antigravity.exe or Python.
+    )
 )
 
 echo.

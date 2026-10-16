@@ -1,7 +1,7 @@
 {
   "name": "arabic-rtl-fixer",
   "displayName": "Arabic / RTL Formatting Fix",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Fixes mixed Arabic & English (RTL/BiDi) text rendering, list alignment, and parentheses in the Antigravity 2.0 interface.",
   "logo": "https://raw.githubusercontent.com/3B00D-0/antigravity-plugins/main/plugins/arabic-rtl-fixer/assets/logo.svg"
 }

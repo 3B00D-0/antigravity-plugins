@@ -17,13 +17,17 @@ $RepoUrl = "https://raw.githubusercontent.com/3B00D-0/antigravity-plugins/main/p
 $PluginDir = Join-Path $HOME ".gemini\config\plugins\arabic-rtl-fixer"
 $SidecarDir = Join-Path $PluginDir "sidecars\rtl_fixer_panel"
 $AssetsDir = Join-Path $PluginDir "assets"
+$LibDir = Join-Path $PluginDir "lib"
 
 New-Item -ItemType Directory -Force -Path $SidecarDir | Out-Null
 New-Item -ItemType Directory -Force -Path $AssetsDir | Out-Null
+New-Item -ItemType Directory -Force -Path $LibDir | Out-Null
 
 $FilesToFetch = @(
     @{ Remote = "plugin.json"; Local = (Join-Path $PluginDir "plugin.json") },
     @{ Remote = "assets/logo.svg"; Local = (Join-Path $AssetsDir "logo.svg") },
+    @{ Remote = "lib/patcher.cjs"; Local = (Join-Path $LibDir "patcher.cjs") },
+    @{ Remote = "lib/injection.js"; Local = (Join-Path $LibDir "injection.js") },
     @{ Remote = "patch_antigravity_rtl.js"; Local = (Join-Path $PluginDir "patch_antigravity_rtl.js") },
     @{ Remote = "patch_antigravity_rtl.py"; Local = (Join-Path $PluginDir "patch_antigravity_rtl.py") },
     @{ Remote = "Install-RTL-Fix.bat"; Local = (Join-Path $PluginDir "Install-RTL-Fix.bat") },
@@ -54,12 +58,12 @@ if (-not (Test-Path $AgyExe)) {
 $PatchJs = Join-Path $PluginDir "patch_antigravity_rtl.js"
 $PatchPy = Join-Path $PluginDir "patch_antigravity_rtl.py"
 
-if (Get-Command python -ErrorAction SilentlyContinue) {
-    python $PatchPy
-} elseif (Test-Path $AgyExe) {
+if (Test-Path $AgyExe) {
     $env:ELECTRON_RUN_AS_NODE = "1"
     & $AgyExe $PatchJs
     Remove-Item Env:\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+} elseif (Get-Command python -ErrorAction SilentlyContinue) {
+    python $PatchPy
 } else {
     Write-Host "  [!] Could not locate Antigravity.exe automatically." -ForegroundColor Red
 }

@@ -2,169 +2,287 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arabic / RTL Formatting Fix</title>
+  <!-- Antigravity sidecar bridge: applies the host theme's CSS variables. -->
+  <script src="/preload.js"></script>
   <style>
+    /* Fallbacks mirror Antigravity's dark theme; the host overrides them via theme-change. */
     :root {
-      color-scheme: dark light;
-      --bg: #141416;
-      --card: #1e1f23;
-      --border: #2e3038;
-      --text: #ececf1;
-      --muted: #9ea1b0;
-      --accent: #3b82f6;
-      --success: #10b981;
-      --danger: #ef4444;
+      color-scheme: light dark;
+      --_bg: var(--background, #101010);
+      --_fg: var(--foreground, #cccccc);
+      --_card: var(--card, color-mix(in srgb, #ffffff 5%, #101010));
+      --_border: var(--border, rgba(255, 255, 255, 0.08));
+      --_primary: var(--primary, #007acc);
+      --_primary-fg: var(--primary-foreground, #ffffff);
+      --_secondary: var(--secondary, color-mix(in srgb, #ffffff 12%, #101010));
+      --_secondary-fg: var(--secondary-foreground, color-mix(in srgb, #cccccc 75%, #101010));
+      --_muted: var(--muted, color-mix(in srgb, #ffffff 2.5%, #101010));
+      --_muted-fg: var(--muted-foreground, color-mix(in srgb, #cccccc 50%, #101010));
+      --_error: var(--error, #f14c4c);
+      --_success: #3fb950;
+      --_warning: #d29922;
     }
-    body {
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    html, body {
       margin: 0;
-      padding: 20px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: var(--_bg);
+      color: var(--_fg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
       line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
+
+    .page { padding: 16px; display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
+
+    /* Header */
+    .header { display: flex; align-items: center; gap: 10px; }
+    .header img { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0; }
+    .header .titles { min-width: 0; flex: 1; }
+    .header h1 { margin: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header .sub { color: var(--_muted-fg); font-size: 12px; }
+
+    /* Card (rounded-lg, bg-card, border-border) */
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-    h2 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
+      background: var(--_card);
+      border: 1px solid var(--_border);
+      border-radius: 8px;
+      padding: 12px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .badge {
-      font-size: 12px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-    .badge.active {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--success);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-    }
-    .badge.inactive {
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-    }
-    p {
-      margin: 6px 0;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .btn-row {
-      display: flex;
+      flex-direction: column;
       gap: 10px;
-      margin-top: 14px;
     }
-    button {
-      cursor: pointer;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      padding: 8px 14px;
+    .card-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .card-title h2 { margin: 0; font-size: 13px; font-weight: 600; }
+    .desc { margin: 0; color: var(--_muted-fg); font-size: 12px; }
+
+    /* Key/value rows */
+    .rows { display: flex; flex-direction: column; gap: 6px; }
+    .row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+    .row .k { color: var(--_muted-fg); }
+    .row .v { color: var(--_fg); font-variant-numeric: tabular-nums; text-align: right; }
+
+    /* Status pill */
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      height: 22px; padding: 0 8px; border-radius: 6px;
+      font-size: 12px; font-weight: 500; white-space: nowrap;
+      background: var(--_secondary); color: var(--_secondary-fg);
+    }
+    .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill.ok { color: var(--_success); background: color-mix(in srgb, var(--_success) 14%, transparent); }
+    .pill.warn { color: var(--_warning); background: color-mix(in srgb, var(--_warning) 14%, transparent); }
+    .pill.err { color: var(--_error); background: color-mix(in srgb, var(--_error) 14%, transparent); }
+
+    /* Buttons: same tokens as Antigravity's <Button size="sm"> (h-7, rounded-md, px-2.5, font-medium) */
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      height: 28px; padding: 0 10px; border-radius: 6px;
+      font: inherit; font-size: 13px; font-weight: 500;
+      border: none; cursor: pointer; user-select: none; outline: none;
+      transition: color .15s, background-color .15s, opacity .15s;
+    }
+    .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .btn:disabled { opacity: .5; pointer-events: none; }
+    .btn:focus-visible { box-shadow: 0 0 0 2px var(--_primary); }
+    .btn-primary { background: var(--_primary); color: var(--_primary-fg); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+    .btn-primary:hover { opacity: .9; }
+    .btn-secondary { background: var(--_secondary); color: var(--_secondary-fg); }
+    .btn-secondary:hover { color: var(--_fg); }
+    .btn-outline { background: transparent; color: var(--_secondary-fg); border: 1px solid var(--_border); }
+    .btn-outline:hover { color: var(--_fg); background: var(--_secondary); }
+    .btn.busy svg { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Inline message */
+    .msg { display: none; font-size: 12px; padding: 8px 10px; border-radius: 6px; background: var(--_muted); border: 1px solid var(--_border); }
+    .msg.show { display: block; }
+    .msg.err { color: var(--_error); }
+    .msg.ok { color: var(--_success); }
+
+    /* Preview */
+    .preview {
+      background: var(--_muted);
+      border: 1px solid var(--_border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      direction: rtl; text-align: right; unicode-bidi: plaintext;
       font-size: 13px;
-      font-weight: 600;
-      transition: opacity 0.15s;
     }
-    button:hover { opacity: 0.9; }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-    .btn-secondary {
-      background: transparent;
-      color: var(--text);
-    }
-    .preview-box {
-      background: #101114;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px;
-      margin-top: 10px;
-      color: var(--text);
-      font-size: 13.5px;
-      direction: rtl;
-      unicode-bidi: plaintext;
-      text-align: right;
-    }
-    .preview-box ul {
-      padding-right: 20px;
-      margin: 8px 0;
-    }
-    code {
-      background: #272930;
-      padding: 2px 5px;
-      border-radius: 4px;
-      font-size: 12px;
-      direction: ltr;
-      unicode-bidi: isolate;
-      display: inline-block;
+    .preview p { margin: 0 0 6px; font-weight: 600; }
+    .preview ul { margin: 0; padding-right: 18px; padding-left: 0; }
+    .preview li { margin: 2px 0; }
+    .preview code {
+      direction: ltr; unicode-bidi: isolate; display: inline-block;
+      font-family: var(--editor-font-family, ui-monospace, "Cascadia Code", Consolas, monospace);
+      font-size: 12px; padding: 0 4px; border-radius: 4px; background: var(--_secondary);
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>
-      <span>Arabic / RTL Formatting Fix</span>
-      <span id="status-badge" class="badge active">Checking...</span>
-    </h2>
-    <p id="status-desc">Automatically aligns mixed Arabic &amp; English paragraphs, numbered lists, and inline parentheses in Antigravity 2.0.</p>
-    <div class="btn-row">
-      <button class="btn-primary" onclick="applyFix()">Re-Apply RTL Fix</button>
-      <button class="btn-secondary" onclick="restoreFix()">Restore Original</button>
-    </div>
-  </div>
+  <div class="page">
+    <header class="header">
+      <img src="/logo.svg" alt="" />
+      <div class="titles">
+        <h1>Arabic / RTL Formatting Fix</h1>
+        <div class="sub" id="plugin-version">Plugin</div>
+      </div>
+      <span class="pill" id="status-pill">Checking</span>
+    </header>
 
-  <div class="card">
-    <h2>Live RTL / BiDi Preview</h2>
-    <div class="preview-box" dir="rtl">
-      <strong>1. نظرة عامة على معمارية النظام (System Architecture):</strong>
-      <ul>
-        <li>يعتمد التطبيق على واجهة برمجة تطبيقات (REST API) مبنية باستخدام <code>Node.js + TypeScript</code>.</li>
-        <li>مزامنة البيانات محلياً عبر (WebSockets) لتقليل زمن الاستجابة بنسبة 60% إلى 80%.</li>
-        <li>عزل الأكواد البرمجية (Code Blocks) لتبقى دائماً من اليسار إلى اليمين <code>direction: ltr</code>.</li>
-      </ul>
-    </div>
+    <section class="card">
+      <div class="card-title"><h2>Patch</h2></div>
+      <div class="rows">
+        <div class="row"><span class="k">Status</span><span class="v" id="row-status">-</span></div>
+        <div class="row"><span class="k">Antigravity</span><span class="v" id="row-app">-</span></div>
+        <div class="row"><span class="k">Backup</span><span class="v" id="row-backup">-</span></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-apply">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+          Re-apply
+        </button>
+        <button class="btn btn-outline" id="btn-restore">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+          Restore original
+        </button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">
+        <h2>Updates</h2>
+        <span class="pill" id="update-pill" hidden>Up to date</span>
+      </div>
+      <p class="desc" id="update-desc">Check GitHub for a newer version of this plugin.</p>
+      <div class="actions">
+        <button class="btn btn-secondary" id="btn-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+          Check for updates
+        </button>
+        <button class="btn btn-primary" id="btn-update" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Update
+        </button>
+      </div>
+    </section>
+
+    <div class="msg" id="msg"></div>
+
+    <section class="card">
+      <div class="card-title"><h2>Preview</h2></div>
+      <div class="preview" dir="rtl">
+        <p>1. نظرة عامة على معمارية النظام (System Architecture):</p>
+        <ul>
+          <li>يعتمد التطبيق على واجهة برمجية (REST API) مبنية باستخدام <code>Node.js</code>.</li>
+          <li>مزامنة البيانات عبر (WebSockets) لتقليل زمن الاستجابة بنسبة 60% إلى 80%.</li>
+          <li>تبقى الأكواد البرمجية دائماً من اليسار إلى اليمين <code>direction: ltr</code>.</li>
+        </ul>
+      </div>
+    </section>
   </div>
 
   <script>
-    const token = new URLSearchParams(window.location.search).get('token') || '';
-    function apiUrl(path) {
-      return token ? `${path}?token=${encodeURIComponent(token)}` : path;
+    // When loaded through the iframe bridge the real URL is in window.__SIDECAR_URL.
+    const pageUrl = new URL(window.__SIDECAR_URL || window.location.href);
+    const token = pageUrl.searchParams.get('token') || '';
+    const $ = (id) => document.getElementById(id);
+
+    async function api(path, method = 'GET') {
+      const res = await fetch(path, { method, headers: token ? { 'X-Sidecar-Token': token } : {} });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
     }
+
+    function setPill(el, text, kind) {
+      el.textContent = text;
+      el.className = 'pill' + (kind ? ' ' + kind : '');
+      el.hidden = false;
+    }
+
+    function showMsg(text, kind) {
+      const el = $('msg');
+      el.textContent = text;
+      el.className = 'msg show' + (kind ? ' ' + kind : '');
+    }
+
+    async function withBusy(btn, fn) {
+      btn.disabled = true;
+      btn.classList.add('busy');
+      try { await fn(); } finally { btn.disabled = false; btn.classList.remove('busy'); }
+    }
+
+    function renderStatus(s) {
+      $('plugin-version').textContent = s.pluginVersion ? `Plugin v${s.pluginVersion}` : 'Plugin';
+      $('row-app').textContent = s.appVersion ? `v${s.appVersion}` : 'Not found';
+      $('row-backup').textContent = s.hasBackup ? 'Available' : 'None';
+      if (s.installed) {
+        setPill($('status-pill'), 'Active', 'ok');
+        $('row-status').textContent = 'Applied';
+      } else if (s.outdated) {
+        setPill($('status-pill'), 'Outdated', 'warn');
+        $('row-status').textContent = 'Older version applied';
+      } else {
+        setPill($('status-pill'), 'Not applied', 'err');
+        $('row-status').textContent = 'Not applied';
+      }
+      if (s.error || s.lastError) showMsg(s.error || s.lastError, 'err');
+    }
+
     async function refreshStatus() {
+      try { renderStatus(await api('/api/status')); }
+      catch (e) { setPill($('status-pill'), 'Offline', 'err'); showMsg(e.message, 'err'); }
+    }
+
+    async function checkUpdates() {
+      const v = await api('/api/version');
+      if (v.updateAvailable) {
+        setPill($('update-pill'), `v${v.latest} available`, 'warn');
+        $('update-desc').textContent = `You have v${v.installed}. Version v${v.latest} is available on GitHub.`;
+        $('btn-update').hidden = false;
+      } else {
+        setPill($('update-pill'), 'Up to date', 'ok');
+        $('update-desc').textContent = `You have the latest version (v${v.installed}).`;
+        $('btn-update').hidden = true;
+      }
+    }
+
+    $('btn-apply').addEventListener('click', (e) => withBusy(e.currentTarget, async () => {
       try {
-        const res = await fetch(apiUrl('/api/status'));
-        const data = await res.json();
-        const badge = document.getElementById('status-badge');
-        const desc = document.getElementById('status-desc');
-        if (data.installed) {
-          badge.textContent = 'Active & Patched';
-          badge.className = 'badge active';
-          desc.textContent = 'RTL/BiDi patch is active in resources/app.asar.';
-        } else {
-          badge.textContent = 'Not Patched';
-          badge.className = 'badge inactive';
-          desc.textContent = 'Click "Re-Apply RTL Fix" to patch Antigravity 2.0.';
-        }
-      } catch (e) {}
-    }
-    async function applyFix() {
-      await fetch(apiUrl('/api/apply'), { method: 'POST' });
-      await refreshStatus();
-    }
-    async function restoreFix() {
-      await fetch(apiUrl('/api/restore'), { method: 'POST' });
-      await refreshStatus();
-    }
+        renderStatus(await api('/api/apply', 'POST'));
+        showMsg('Patch applied. Restart Antigravity to load it.', 'ok');
+      } catch (err) { showMsg(err.message, 'err'); }
+    }));
+
+    $('btn-restore').addEventListener('click', (e) => withBusy(e.currentTarget, async () => {
+      try {
+        renderStatus(await api('/api/restore', 'POST'));
+        showMsg('Original files restored. Restart Antigravity to finish.', 'ok');
+      } catch (err) { showMsg(err.message, 'err'); }
+    }));
+
+    $('btn-check').addEventListener('click', (e) => withBusy(e.currentTarget, async () => {
+      try { await checkUpdates(); } catch (err) { showMsg('Could not reach GitHub: ' + err.message, 'err'); }
+    }));
+
+    $('btn-update').addEventListener('click', (e) => withBusy(e.currentTarget, async () => {
+      try {
+        const r = await api('/api/update', 'POST');
+        $('btn-update').hidden = true;
+        setPill($('update-pill'), `v${r.version} installed`, 'ok');
+        showMsg(`Updated to v${r.version}. Restart Antigravity to load the new version.`, 'ok');
+      } catch (err) { showMsg('Update failed: ' + err.message, 'err'); }
+    }));
+
     refreshStatus();
+    checkUpdates().catch(() => {});
   </script>
 </body>
 </html>

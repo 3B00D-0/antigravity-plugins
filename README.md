@@ -12,7 +12,7 @@ A curated monorepo of plugins, UI patches, and sidecar extensions for the **Goog
 
 | Plugin | Version | Description | Install |
 | :--- | :---: | :--- | :--- |
-| <img src="plugins/arabic-rtl-fixer/assets/logo.svg" width="22" align="absmiddle" /> **[arabic-rtl-fixer](plugins/arabic-rtl-fixer)** | `1.0.0` | Fixes mixed Arabic & English (RTL/LTR) bidirectional text rendering, list markers, and parentheses in Antigravity 2.0. | [Docs](plugins/arabic-rtl-fixer/README.md) |
+| <img src="plugins/arabic-rtl-fixer/assets/logo.svg" width="22" align="absmiddle" /> **[arabic-rtl-fixer](plugins/arabic-rtl-fixer)** | `1.1.0` | Fixes mixed Arabic & English (RTL/LTR) bidirectional text rendering, list markers, and parentheses in Antigravity 2.0. | [Docs](plugins/arabic-rtl-fixer/README.md) |
 
 ---
 
