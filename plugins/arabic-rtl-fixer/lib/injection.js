@@ -1,4 +1,4 @@
-/* === ANTIGRAVITY_RTL_BIDI_FIX_V2 === */
+/* === ANTIGRAVITY_RTL_BIDI_FIX_V3 === */
 (() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
@@ -6,13 +6,17 @@
     // 1. RTL / BiDi formatting
     // ------------------------------------------------------------------
     const RTL_CSS = `
+        /* Block elements BiDi & text alignment */
         p, h1, h2, h3, h4, h5, h6, li, blockquote, dd, dt,
+        caption, figcaption, details, summary,
         [data-quotable="true"],
         [data-testid="comment-card-text"],
         [data-lexical-editor="true"] p {
             unicode-bidi: plaintext !important;
             text-align: start !important;
         }
+
+        /* Lists */
         ul[dir="rtl"], ol[dir="rtl"],
         ul:has(> li[dir="rtl"]), ol:has(> li[dir="rtl"]) {
             direction: rtl !important;
@@ -24,12 +28,44 @@
             direction: rtl !important;
             text-align: right !important;
         }
+
+        /* Blockquotes */
         blockquote[dir="rtl"], blockquote:has(> p[dir="rtl"]) {
             direction: rtl !important;
             text-align: right !important;
             border-left: none !important;
             border-right: 4px solid var(--border, #555) !important;
         }
+
+        /* Tables & Table Cells (full BiDi isolation & alignment) */
+        table[dir="rtl"] {
+            direction: rtl !important;
+        }
+        th, td, caption, figcaption {
+            unicode-bidi: plaintext !important;
+        }
+        th[dir="rtl"]:not([style*="text-align: center"]):not([style*="text-align:center"]),
+        td[dir="rtl"]:not([style*="text-align: center"]):not([style*="text-align:center"]) {
+            direction: rtl !important;
+            text-align: right !important;
+            unicode-bidi: plaintext !important;
+        }
+        th[dir="rtl"][style*="text-align: center"],
+        th[dir="rtl"][style*="text-align:center"],
+        td[dir="rtl"][style*="text-align: center"],
+        td[dir="rtl"][style*="text-align:center"] {
+            direction: rtl !important;
+            text-align: center !important;
+            unicode-bidi: plaintext !important;
+        }
+        th[dir="ltr"]:not([style*="text-align: center"]):not([style*="text-align:center"]),
+        td[dir="ltr"]:not([style*="text-align: center"]):not([style*="text-align:center"]) {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: plaintext !important;
+        }
+
+        /* Code & Math preservation */
         pre, pre code, .katex, .katex-display {
             direction: ltr !important;
             unicode-bidi: isolate !important;
@@ -43,8 +79,9 @@
     `;
 
     const ARABIC_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    const ARABIC_GLOBAL_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g;
     const STRONG_CHAR_REGEX = /[A-Za-z\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-    const TARGET_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote, [data-quotable="true"]';
+    const TARGET_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote, table, th, td, caption, figcaption, dd, dt, details, summary, [data-quotable="true"]';
 
     function detectDir(text) {
         if (!text) return null;
@@ -63,10 +100,42 @@
         if (tag === 'pre' || tag === 'code' || el.closest('pre, code, .katex')) return;
 
         const text = el.textContent || '';
+
+        // Table container
+        if (tag === 'table') {
+            if (hasArabic(text)) {
+                const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
+                const enCount = (text.match(/[A-Za-z]/g) || []).length;
+                if (arCount >= enCount * 0.25 || detectDir(text) === 'rtl') {
+                    if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
+                }
+            }
+            return;
+        }
+
+        // Lists
         if (tag === 'ul' || tag === 'ol') {
             if (hasArabic(text) && el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
             return;
         }
+
+        // Table cells & captions
+        if (tag === 'th' || tag === 'td' || tag === 'caption' || tag === 'figcaption') {
+            if (hasArabic(text)) {
+                const dir = detectDir(text);
+                const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
+                const enCount = (text.match(/[A-Za-z]/g) || []).length;
+                const targetDir = (dir === 'rtl' || arCount >= enCount * 0.25) ? 'rtl' : 'auto';
+                if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
+            } else if (/[A-Za-z]/.test(text)) {
+                if (el.getAttribute('dir') !== 'ltr') el.setAttribute('dir', 'ltr');
+            } else if (!el.hasAttribute('dir')) {
+                el.setAttribute('dir', 'auto');
+            }
+            return;
+        }
+
+        // General blocks (p, h1-h6, li, blockquote, etc.)
         if (!text.trim()) {
             if (!el.hasAttribute('dir')) el.setAttribute('dir', 'auto');
             return;
@@ -74,9 +143,9 @@
         if (detectDir(text) === 'rtl') {
             if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
         } else if (hasArabic(text)) {
-            const arCount = (text.match(/[\u0600-\u06FF]/g) || []).length;
+            const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
             const enCount = (text.match(/[A-Za-z]/g) || []).length;
-            const targetDir = arCount >= enCount * 0.4 ? 'rtl' : 'auto';
+            const targetDir = arCount >= enCount * 0.25 ? 'rtl' : 'auto';
             if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
         } else if (!el.hasAttribute('dir')) {
             el.setAttribute('dir', 'auto');
@@ -195,6 +264,8 @@
                     if (block) applyRtlToElement(block);
                     const list = node.parentElement.closest('ul, ol');
                     if (list) applyRtlToElement(list);
+                    const tbl = node.parentElement.closest('table');
+                    if (tbl) applyRtlToElement(tbl);
                 }
             }
         };

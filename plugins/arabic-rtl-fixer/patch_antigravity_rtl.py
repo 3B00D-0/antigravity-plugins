@@ -18,7 +18,7 @@ import shutil
 import hashlib
 
 MARKER_PREFIX = "/* === ANTIGRAVITY_RTL_BIDI_FIX_"
-RTL_INJECTION_MARKER = "/* === ANTIGRAVITY_RTL_BIDI_FIX_V2 === */"
+RTL_INJECTION_MARKER = "/* === ANTIGRAVITY_RTL_BIDI_FIX_V3 === */"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 INJECTION_JS_PATH = os.path.join(SCRIPT_DIR, "lib", "injection.js")
