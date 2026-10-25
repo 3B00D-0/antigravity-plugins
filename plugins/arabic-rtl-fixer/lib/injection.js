@@ -17,16 +17,25 @@
         }
 
         /* Lists */
-        ul[dir="rtl"], ol[dir="rtl"],
-        ul:has(> li[dir="rtl"]), ol:has(> li[dir="rtl"]) {
+        ul[dir="rtl"], ol[dir="rtl"] {
             direction: rtl !important;
             text-align: right !important;
             padding-right: 1.75rem !important;
             padding-left: 0 !important;
         }
+        ul[dir="ltr"], ol[dir="ltr"] {
+            direction: ltr !important;
+            text-align: left !important;
+            padding-left: 1.75rem !important;
+            padding-right: 0 !important;
+        }
         li[dir="rtl"] {
             direction: rtl !important;
             text-align: right !important;
+        }
+        li[dir="ltr"] {
+            direction: ltr !important;
+            text-align: left !important;
         }
 
         /* Blockquotes */
@@ -40,6 +49,9 @@
         /* Tables & Table Cells (full BiDi isolation & alignment) */
         table[dir="rtl"] {
             direction: rtl !important;
+        }
+        table[dir="ltr"] {
+            direction: ltr !important;
         }
         th, td, caption, figcaption {
             unicode-bidi: plaintext !important;
@@ -72,9 +84,7 @@
             text-align: left !important;
         }
         :not(pre) > code {
-            direction: ltr !important;
-            unicode-bidi: isolate !important;
-            display: inline-block;
+            unicode-bidi: plaintext !important;
         }
     `;
 
@@ -106,16 +116,28 @@
             if (hasArabic(text)) {
                 const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
                 const enCount = (text.match(/[A-Za-z]/g) || []).length;
-                if (arCount >= enCount * 0.25 || detectDir(text) === 'rtl') {
+                // Only flip entire table layout if Arabic is the primary language of the table
+                if (arCount > enCount * 1.2 || (detectDir(text) === 'rtl' && arCount >= enCount * 0.8)) {
                     if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
+                } else if (el.getAttribute('dir') !== 'ltr') {
+                    el.setAttribute('dir', 'ltr');
                 }
             }
             return;
         }
 
-        // Lists
+        // Lists (ul / ol)
         if (tag === 'ul' || tag === 'ol') {
-            if (hasArabic(text) && el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
+            if (hasArabic(text)) {
+                const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
+                const enCount = (text.match(/[A-Za-z]/g) || []).length;
+                // Only flip list container if the majority of the list content is Arabic
+                if (arCount > enCount * 1.2 || (detectDir(text) === 'rtl' && arCount >= enCount * 0.8)) {
+                    if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
+                } else if (el.getAttribute('dir') !== 'ltr') {
+                    el.setAttribute('dir', 'ltr');
+                }
+            }
             return;
         }
 
@@ -125,7 +147,8 @@
                 const dir = detectDir(text);
                 const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
                 const enCount = (text.match(/[A-Za-z]/g) || []).length;
-                const targetDir = (dir === 'rtl' || arCount >= enCount * 0.25) ? 'rtl' : 'auto';
+                // If it starts with Arabic, it's RTL. If it starts with Latin, only flip if Arabic is dominant.
+                const targetDir = (dir === 'rtl' || arCount > enCount * 1.2) ? 'rtl' : 'ltr';
                 if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
             } else if (/[A-Za-z]/.test(text)) {
                 if (el.getAttribute('dir') !== 'ltr') el.setAttribute('dir', 'ltr');
@@ -140,13 +163,17 @@
             if (!el.hasAttribute('dir')) el.setAttribute('dir', 'auto');
             return;
         }
-        if (detectDir(text) === 'rtl') {
+        const dir = detectDir(text);
+        if (dir === 'rtl') {
             if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
         } else if (hasArabic(text)) {
             const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
             const enCount = (text.match(/[A-Za-z]/g) || []).length;
-            const targetDir = arCount >= enCount * 0.25 ? 'rtl' : 'auto';
+            // Only mark RTL if Arabic is the primary language; English sentences quoting Arabic stay LTR!
+            const targetDir = arCount > enCount * 1.2 ? 'rtl' : 'ltr';
             if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
+        } else if (dir === 'ltr') {
+            if (el.getAttribute('dir') !== 'ltr') el.setAttribute('dir', 'ltr');
         } else if (!el.hasAttribute('dir')) {
             el.setAttribute('dir', 'auto');
         }
@@ -161,13 +188,6 @@
 
     // ------------------------------------------------------------------
     // 2. Sidecar iframe bridge (only for this plugin's own panel)
-    //
-    // Antigravity 2.24 aborts top-level iframe navigations to plugin://
-    // (net::ERR_ABORTED), leaving the Aux Pane spinner forever, while
-    // fetch() to the same URL works cleanly. If the panel has not loaded
-    // real content after 600ms, fetch its HTML and load it from a Blob
-    // URL with <base href="plugin://..."> so relative assets/APIs still
-    // resolve through the plugin:// protocol handler.
     // ------------------------------------------------------------------
     const SIDECAR_PREFIX = 'plugin://arabic-rtl-fixer--';
     const BRIDGE_GRACE_MS = 600;
