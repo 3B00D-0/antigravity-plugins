@@ -1,4 +1,4 @@
-/* === ANTIGRAVITY_RTL_BIDI_FIX_V3 === */
+/* === ANTIGRAVITY_RTL_BIDI_FIX_V4 === */
 (() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
@@ -7,7 +7,7 @@
     // ------------------------------------------------------------------
     const RTL_CSS = `
         /* Block elements BiDi & text alignment */
-        p, h1, h2, h3, h4, h5, h6, li, blockquote, dd, dt,
+        p, h1, h2, h3, h4, h5, h6, blockquote, dd, dt,
         caption, figcaption, details, summary,
         [data-quotable="true"],
         [data-testid="comment-card-text"],
@@ -16,82 +16,166 @@
             text-align: start !important;
         }
 
-        /* Lists */
-        ul[dir="rtl"], ol[dir="rtl"] {
+        /* Explicit direction overrides for paragraphs & headings */
+        p[dir="rtl"], h1[dir="rtl"], h2[dir="rtl"], h3[dir="rtl"],
+        h4[dir="rtl"], h5[dir="rtl"], h6[dir="rtl"],
+        [data-quotable="true"][dir="rtl"],
+        [data-testid="comment-card-text"][dir="rtl"] {
+            direction: rtl !important;
+            text-align: right !important;
+            unicode-bidi: isolate !important;
+        }
+        p[dir="ltr"], h1[dir="ltr"], h2[dir="ltr"], h3[dir="ltr"],
+        h4[dir="ltr"], h5[dir="ltr"], h6[dir="ltr"],
+        [data-quotable="true"][dir="ltr"],
+        [data-testid="comment-card-text"][dir="ltr"] {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: isolate !important;
+        }
+
+        /* Lists: High specificity to beat Antigravity's [&>ol:not(.contains-task-list)]:!pl-4 */
+        html body ul[dir="rtl"],
+        html body ol[dir="rtl"],
+        html body [dir="rtl"] > ul:not([dir="ltr"]),
+        html body [dir="rtl"] > ol:not([dir="ltr"]) {
             direction: rtl !important;
             text-align: right !important;
             padding-right: 1.75rem !important;
             padding-left: 0 !important;
+            margin-right: 0 !important;
+            list-style-position: outside !important;
         }
-        ul[dir="ltr"], ol[dir="ltr"] {
+        html body ul[dir="ltr"],
+        html body ol[dir="ltr"] {
             direction: ltr !important;
             text-align: left !important;
             padding-left: 1.75rem !important;
             padding-right: 0 !important;
-        }
-        li[dir="rtl"] {
-            direction: rtl !important;
-            text-align: right !important;
-        }
-        li[dir="ltr"] {
-            direction: ltr !important;
-            text-align: left !important;
+            margin-left: 0 !important;
+            list-style-position: outside !important;
         }
 
-        /* Blockquotes */
-        blockquote[dir="rtl"], blockquote:has(> p[dir="rtl"]) {
+        /* List items: DO NOT use unicode-bidi: plaintext on li, or ::marker decouples from line alignment! */
+        html body li[dir="rtl"],
+        html body ul[dir="rtl"] > li:not([dir="ltr"]),
+        html body ol[dir="rtl"] > li:not([dir="ltr"]) {
+            direction: rtl !important;
+            text-align: right !important;
+            unicode-bidi: isolate !important;
+        }
+        html body li[dir="ltr"],
+        html body ul[dir="ltr"] > li:not([dir="rtl"]),
+        html body ol[dir="ltr"] > li:not([dir="rtl"]) {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: isolate !important;
+        }
+        /* Child paragraphs inside list items must inherit list item direction */
+        html body li[dir="rtl"] > p {
+            direction: rtl !important;
+            text-align: right !important;
+            unicode-bidi: isolate !important;
+        }
+        html body li[dir="ltr"] > p {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: isolate !important;
+        }
+
+        /* Blockquotes & GitHub-style Callouts / Alerts (NOTE, TIP, IMPORTANT, WARNING, CAUTION) */
+        html body blockquote[dir="rtl"],
+        html body blockquote:has(> p[dir="rtl"]),
+        html body div[class*="border-l"][dir="rtl"],
+        html body div[class*="border-l"]:has(> p[dir="rtl"]) {
+            direction: rtl !important;
+            text-align: right !important;
+            border-left-width: 0px !important;
+            border-right-width: 4px !important;
+            border-right-style: solid !important;
+            padding-right: 1rem !important;
+            padding-left: 0.5rem !important;
+        }
+        html body .markdown-alert[dir="rtl"],
+        html body .markdown-alert:has(> p[dir="rtl"]) {
             direction: rtl !important;
             text-align: right !important;
             border-left: none !important;
-            border-right: 4px solid var(--border, #555) !important;
+            border-right: 4px solid currentColor !important;
+            padding-right: 1rem !important;
+            padding-left: 0 !important;
         }
 
         /* Tables & Table Cells (full BiDi isolation & alignment) */
-        table[dir="rtl"] {
+        html body table[dir="rtl"] {
             direction: rtl !important;
         }
-        table[dir="ltr"] {
+        html body table[dir="ltr"] {
             direction: ltr !important;
         }
         th, td, caption, figcaption {
             unicode-bidi: plaintext !important;
         }
-        th[dir="rtl"]:not([style*="text-align: center"]):not([style*="text-align:center"]),
-        td[dir="rtl"]:not([style*="text-align: center"]):not([style*="text-align:center"]) {
+        html body th[dir="rtl"]:not([style*="text-align: center"]):not([style*="text-align:center"]),
+        html body td[dir="rtl"]:not([style*="text-align: center"]):not([style*="text-align:center"]) {
             direction: rtl !important;
             text-align: right !important;
-            unicode-bidi: plaintext !important;
+            unicode-bidi: isolate !important;
         }
-        th[dir="rtl"][style*="text-align: center"],
-        th[dir="rtl"][style*="text-align:center"],
-        td[dir="rtl"][style*="text-align: center"],
-        td[dir="rtl"][style*="text-align:center"] {
+        html body th[dir="rtl"][style*="text-align: center"],
+        html body th[dir="rtl"][style*="text-align:center"],
+        html body td[dir="rtl"][style*="text-align: center"],
+        html body td[dir="rtl"][style*="text-align:center"] {
             direction: rtl !important;
             text-align: center !important;
-            unicode-bidi: plaintext !important;
+            unicode-bidi: isolate !important;
         }
-        th[dir="ltr"]:not([style*="text-align: center"]):not([style*="text-align:center"]),
-        td[dir="ltr"]:not([style*="text-align: center"]):not([style*="text-align:center"]) {
+        html body th[dir="ltr"]:not([style*="text-align: center"]):not([style*="text-align:center"]),
+        html body td[dir="ltr"]:not([style*="text-align: center"]):not([style*="text-align:center"]) {
             direction: ltr !important;
             text-align: left !important;
-            unicode-bidi: plaintext !important;
+            unicode-bidi: isolate !important;
         }
 
         /* Code & Math preservation */
-        pre, pre code, .katex, .katex-display {
+        pre:not([dir="rtl"]),
+        pre:not([dir="rtl"]) code,
+        .katex,
+        .katex-display {
             direction: ltr !important;
             unicode-bidi: isolate !important;
             text-align: left !important;
         }
-        :not(pre) > code {
+        /* Plaintext / copy-paste code blocks that are predominantly Arabic */
+        html body pre[dir="rtl"],
+        html body pre[dir="rtl"] code {
+            direction: rtl !important;
             unicode-bidi: plaintext !important;
+            text-align: right !important;
+        }
+
+        /* Inline code badges & file pills: isolate so they never invert surrounding Arabic punctuation/arrows */
+        :not(pre) > code:not([dir="rtl"]) {
+            direction: ltr !important;
+            unicode-bidi: isolate !important;
+        }
+        :not(pre) > code[dir="rtl"] {
+            direction: rtl !important;
+            unicode-bidi: isolate !important;
+        }
+        p[dir="rtl"] a,
+        li[dir="rtl"] a,
+        td[dir="rtl"] a,
+        th[dir="rtl"] a {
+            unicode-bidi: isolate !important;
         }
     `;
 
     const ARABIC_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
     const ARABIC_GLOBAL_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g;
     const STRONG_CHAR_REGEX = /[A-Za-z\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-    const TARGET_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote, table, th, td, caption, figcaption, dd, dt, details, summary, [data-quotable="true"]';
+    const TECH_TOKEN_REGEX = /https?:\/\/\S+|\b[\w./\\-]+\.(?:md|py|js|cjs|mjs|ts|tsx|jsx|json|ino|scad|stl|html|css|sh|bat|ps1|yaml|yml|toml|txt|csv|pdf|png|jpg|svg|exe|asar)\b/gi;
+    const TARGET_SELECTOR = 'p, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote, pre, code, table, th, td, caption, figcaption, dd, dt, details, summary, [data-quotable="true"], [data-testid="comment-card-text"], .markdown-alert, div[class*="border-l"]';
 
     function detectDir(text) {
         if (!text) return null;
@@ -104,79 +188,158 @@
         return !!text && ARABIC_REGEX.test(text);
     }
 
+    function countChars(text) {
+        if (!text) return { ar: 0, en: 0 };
+        const ar = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
+        const en = (text.match(/[A-Za-z]/g) || []).length;
+        return { ar, en };
+    }
+
+    /**
+     * Extracts natural prose text from an element by excluding technical inline children
+     * (<code>, <pre>, <kbd>, <samp>, .katex, file links) and stripping URLs/filenames.
+     * This prevents English badges like `1. Solar Panel (Basmala)` -> `solar_test.md`
+     * from tricking an Arabic sentence into LTR mode, while keeping English sentences
+     * that quote Arabic inside `<code>` strictly in LTR mode.
+     */
+    function getProseText(el) {
+        if (!el) return '';
+        let raw = '';
+        const walk = (node) => {
+            for (let child = node.firstChild; child; child = child.nextSibling) {
+                if (child.nodeType === 3) {
+                    raw += child.nodeValue;
+                } else if (child.nodeType === 1) {
+                    const t = child.tagName.toLowerCase();
+                    if (t === 'pre' || t === 'code' || t === 'kbd' || t === 'samp' || t === 'script' || t === 'style') continue;
+                    if (child.classList && (child.classList.contains('katex') || child.classList.contains('katex-display'))) continue;
+                    walk(child);
+                }
+            }
+        };
+        walk(el);
+        return raw.replace(TECH_TOKEN_REGEX, ' ');
+    }
+
+    /**
+     * Determines whether an element with mixed text should be 'rtl' or 'ltr'.
+     */
+    function resolveElementDir(el, fullText) {
+        if (!hasArabic(fullText)) {
+            return /[A-Za-z]/.test(fullText) ? 'ltr' : null;
+        }
+        const prose = getProseText(el);
+        const { ar: proseAr, en: proseEn } = countChars(prose);
+
+        // If there is natural prose outside <code>/filenames:
+        if (proseAr + proseEn > 0) {
+            if (proseAr === 0) return 'ltr'; // Arabic was only inside <code> quotes inside an English sentence!
+            if (detectDir(prose) === 'rtl') return 'rtl';
+            if (proseAr >= proseEn * 0.35) return 'rtl';
+            return 'ltr';
+        }
+
+        // Fallback when all text is inside child tags (e.g. a line made entirely of <code> or <a>):
+        const { ar, en } = countChars(fullText);
+        if (detectDir(fullText) === 'rtl' || ar >= en * 0.5) return 'rtl';
+        return 'ltr';
+    }
+
     function applyRtlToElement(el) {
         if (!el || !el.tagName) return;
         const tag = el.tagName.toLowerCase();
-        if (tag === 'pre' || tag === 'code' || el.closest('pre, code, .katex')) return;
+        if (el.closest('.katex, .katex-display')) return;
+
+        // Inline <code>
+        if (tag === 'code') {
+            if (el.parentElement && el.parentElement.tagName.toLowerCase() === 'pre') return;
+            const codeText = el.textContent || '';
+            const targetDir = hasArabic(codeText) ? 'rtl' : 'ltr';
+            if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
+            return;
+        }
+
+        // <pre> blocks: keep code LTR, but allow Arabic plaintext copy-paste blocks to flow RTL
+        if (tag === 'pre') {
+            const preText = el.textContent || '';
+            if (hasArabic(preText)) {
+                const { ar, en } = countChars(preText);
+                const targetDir = (ar > en * 0.6) ? 'rtl' : 'ltr';
+                if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
+            } else if (el.getAttribute('dir') !== 'ltr') {
+                el.setAttribute('dir', 'ltr');
+            }
+            return;
+        }
+
+        if (el.closest('pre, code')) return;
+
+        // Skip generic divs unless they are callout/alert boxes or explicit target containers
+        if (tag === 'div') {
+            const cls = typeof el.className === 'string' ? el.className : '';
+            const isCallout = cls.includes('border-l') || cls.includes('markdown-alert') ||
+                el.getAttribute('data-quotable') === 'true' ||
+                el.getAttribute('data-testid') === 'comment-card-text';
+            if (!isCallout) return;
+        }
 
         const text = el.textContent || '';
 
         // Table container
         if (tag === 'table') {
-            if (hasArabic(text)) {
-                const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
-                const enCount = (text.match(/[A-Za-z]/g) || []).length;
-                // Only flip entire table layout if Arabic is the primary language of the table
-                if (arCount > enCount * 1.2 || (detectDir(text) === 'rtl' && arCount >= enCount * 0.8)) {
-                    if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
-                } else if (el.getAttribute('dir') !== 'ltr') {
-                    el.setAttribute('dir', 'ltr');
-                }
-            }
+            const targetDir = resolveElementDir(el, text) || 'ltr';
+            if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
             return;
         }
 
-        // Lists (ul / ol)
+        // Lists (ul / ol): ensure list and its items align consistently
         if (tag === 'ul' || tag === 'ol') {
-            if (hasArabic(text)) {
-                const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
-                const enCount = (text.match(/[A-Za-z]/g) || []).length;
-                // Only flip list container if the majority of the list content is Arabic
-                if (arCount > enCount * 1.2 || (detectDir(text) === 'rtl' && arCount >= enCount * 0.8)) {
-                    if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
-                } else if (el.getAttribute('dir') !== 'ltr') {
-                    el.setAttribute('dir', 'ltr');
+            const items = Array.from(el.children).filter((c) => c.tagName && c.tagName.toLowerCase() === 'li');
+            let rtlItems = 0;
+            let ltrItems = 0;
+            for (const item of items) {
+                const itemDir = resolveElementDir(item, item.textContent || '');
+                if (itemDir === 'rtl') rtlItems++;
+                else if (itemDir === 'ltr') ltrItems++;
+            }
+            const listDir = (rtlItems > 0 && rtlItems >= ltrItems)
+                ? 'rtl'
+                : (resolveElementDir(el, text) || 'ltr');
+            if (el.getAttribute('dir') !== listDir) el.setAttribute('dir', listDir);
+
+            // Propagate consistent direction to child <li> elements
+            for (const item of items) {
+                const itemText = item.textContent || '';
+                if (listDir === 'rtl' && hasArabic(itemText)) {
+                    if (item.getAttribute('dir') !== 'rtl') item.setAttribute('dir', 'rtl');
+                } else {
+                    const itemDir = resolveElementDir(item, itemText) || listDir;
+                    if (item.getAttribute('dir') !== itemDir) item.setAttribute('dir', itemDir);
                 }
             }
             return;
         }
 
-        // Table cells & captions
-        if (tag === 'th' || tag === 'td' || tag === 'caption' || tag === 'figcaption') {
-            if (hasArabic(text)) {
-                const dir = detectDir(text);
-                const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
-                const enCount = (text.match(/[A-Za-z]/g) || []).length;
-                // If it starts with Arabic, it's RTL. If it starts with Latin, only flip if Arabic is dominant.
-                const targetDir = (dir === 'rtl' || arCount > enCount * 1.2) ? 'rtl' : 'ltr';
-                if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
-            } else if (/[A-Za-z]/.test(text)) {
-                if (el.getAttribute('dir') !== 'ltr') el.setAttribute('dir', 'ltr');
-            } else if (!el.hasAttribute('dir')) {
-                el.setAttribute('dir', 'auto');
+        // Individual list item (li)
+        if (tag === 'li') {
+            const parentList = el.parentElement;
+            const parentDir = parentList ? parentList.getAttribute('dir') : null;
+            if (parentDir === 'rtl' && hasArabic(text)) {
+                if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
+                return;
             }
+            const targetDir = resolveElementDir(el, text) || parentDir || 'auto';
+            if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
             return;
         }
 
-        // General blocks (p, h1-h6, li, blockquote, etc.)
+        // General blocks, table cells (th/td), headings, paragraphs, callouts
         if (!text.trim()) {
             if (!el.hasAttribute('dir')) el.setAttribute('dir', 'auto');
             return;
         }
-        const dir = detectDir(text);
-        if (dir === 'rtl') {
-            if (el.getAttribute('dir') !== 'rtl') el.setAttribute('dir', 'rtl');
-        } else if (hasArabic(text)) {
-            const arCount = (text.match(ARABIC_GLOBAL_REGEX) || []).length;
-            const enCount = (text.match(/[A-Za-z]/g) || []).length;
-            // Only mark RTL if Arabic is the primary language; English sentences quoting Arabic stay LTR!
-            const targetDir = arCount > enCount * 1.2 ? 'rtl' : 'ltr';
-            if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
-        } else if (dir === 'ltr') {
-            if (el.getAttribute('dir') !== 'ltr') el.setAttribute('dir', 'ltr');
-        } else if (!el.hasAttribute('dir')) {
-            el.setAttribute('dir', 'auto');
-        }
+        const targetDir = resolveElementDir(el, text) || 'auto';
+        if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
     }
 
     function processSubtree(root) {
@@ -279,7 +442,11 @@
             for (const node of nodes) {
                 if (node.nodeType === 1) {
                     processSubtree(node);
+                    const parentList = node.closest && node.closest('ul, ol');
+                    if (parentList) applyRtlToElement(parentList);
                 } else if (node.nodeType === 3 && node.parentElement) {
+                    const codeEl = node.parentElement.closest('code, pre');
+                    if (codeEl) applyRtlToElement(codeEl);
                     const block = node.parentElement.closest(TARGET_SELECTOR);
                     if (block) applyRtlToElement(block);
                     const list = node.parentElement.closest('ul, ol');
