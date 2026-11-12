@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arabic / RTL Formatting Fix</title>
   <script>
-    // Apply theme attribute before first paint to match host without flash
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches && !document.documentElement.dataset.theme) {
       document.documentElement.dataset.theme = 'light';
     }
@@ -13,20 +12,20 @@
   <!-- Antigravity sidecar bridge: syncs host CSS variables & window.sidecar -->
   <script src="/preload.js"></script>
   <style>
-    /* Neo Antigravity 2.x Design Tokens (tracks host --background, --card, --primary, etc.) */
+    /* Neo Antigravity 2.x Design Tokens (follows host theme automatically) */
     :root,
     :root[data-theme="dark"] {
       color-scheme: dark;
       --_bg: var(--background, #101114);
       --_fg: var(--foreground, #e6e8ec);
       --_fg-2: var(--secondary-foreground, #c4c8d0);
-      --_fg-muted: var(--muted-foreground, #8e959f);
-      --_fg-faint: var(--placeholder, #646b75);
-      --_card: var(--card, color-mix(in srgb, var(--_bg) 88%, #ffffff));
+      --_fg-muted: var(--muted-foreground, #8b929d);
+      --_fg-faint: var(--placeholder, #5f6672);
+      --_card: var(--card, color-mix(in srgb, var(--_bg) 89%, #ffffff));
       --_card-border: var(--card-border, var(--border, rgba(255, 255, 255, 0.08)));
-      --_line: color-mix(in srgb, var(--_fg) 8%, transparent);
-      --_fill: color-mix(in srgb, var(--_fg) 6.5%, transparent);
-      --_hover: color-mix(in srgb, var(--_fg) 7%, transparent);
+      --_line: color-mix(in srgb, var(--_fg) 7.5%, transparent);
+      --_fill: color-mix(in srgb, var(--_fg) 5.5%, transparent);
+      --_hover: color-mix(in srgb, var(--_fg) 7.5%, transparent);
       --_press: color-mix(in srgb, var(--_fg) 12%, transparent);
       --_primary: var(--primary, #3a6ff7);
       --_primary-fg: var(--primary-foreground, #ffffff);
@@ -34,11 +33,11 @@
       --_ring: color-mix(in srgb, var(--_primary) 70%, transparent);
 
       --_ok: #7aae66;
-      --_ok-soft: color-mix(in srgb, var(--_ok) 15%, transparent);
+      --_ok-soft: color-mix(in srgb, var(--_ok) 14%, transparent);
       --_warn: #cab43e;
-      --_warn-soft: color-mix(in srgb, var(--_warn) 16%, transparent);
+      --_warn-soft: color-mix(in srgb, var(--_warn) 15%, transparent);
       --_bad: var(--error, #ff6b6b);
-      --_bad-soft: color-mix(in srgb, var(--_bad) 15%, transparent);
+      --_bad-soft: color-mix(in srgb, var(--_bad) 14%, transparent);
 
       --_font: var(--font-family, "Google Sans Flex", "Google Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
       --_mono: var(--editor-font-family, "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
@@ -55,7 +54,7 @@
       --_fg-muted: var(--muted-foreground, #5d676f);
       --_fg-faint: var(--placeholder, #9da5ab);
       --_card: var(--card, #ffffff);
-      --_card-border: var(--card-border, var(--border, rgba(0, 0, 0, 0.1)));
+      --_card-border: var(--card-border, var(--border, rgba(0, 0, 0, 0.09)));
       --_secondary: var(--secondary, #e6e7e9);
       --_ok: #188038;
       --_warn: #b06000;
@@ -91,7 +90,7 @@
       text-rendering: optimizeLegibility;
     }
 
-    /* Sticky monochrome Neo header */
+    /* Sticky monochrome top bar */
     .header {
       position: sticky;
       top: 0;
@@ -103,105 +102,156 @@
       align-items: center;
       gap: 10px;
     }
-    .header img {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
-      flex-shrink: 0;
+    .header-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--_fill);
+      border: 1px solid var(--_card-border);
+      display: grid;
+      place-items: center;
+      flex: none;
     }
+    .header-icon img { width: 20px; height: 20px; display: block; border-radius: 4px; }
     .header .titles { min-width: 0; flex: 1; }
     .header h1 {
       margin: 0;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
-      line-height: 1.3;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .header .sub {
+      margin-top: 1px;
       color: var(--_fg-muted);
       font-size: 11.5px;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .page {
-      padding: 14px 16px 28px;
+      padding: 14px 16px 24px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       max-width: 680px;
       margin: 0 auto;
     }
 
-    /* Neo Cards (rounded-lg / 10px, card-border) */
+    /* Surface cards */
     .card {
       background: var(--_card);
       border: 1px solid var(--_card-border);
       border-radius: var(--r-lg);
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      overflow: hidden;
     }
-    .card-head {
+    .card-body { padding: 12px 14px; }
+    .card-foot {
+      padding: 9px 14px;
+      border-top: 1px solid var(--_line);
+      background: color-mix(in srgb, var(--_fg) 2%, transparent);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      min-height: 22px;
-    }
-    .card-head h2 {
-      margin: 0;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--_fg);
-    }
-    .desc {
-      margin: 0;
-      color: var(--_fg-muted);
-      font-size: 12px;
-      line-height: 1.45;
+      flex-wrap: wrap;
     }
 
-    /* Metadata rows */
-    .rows {
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--_fg-muted);
+      margin: 0 0 8px;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
-    .row {
+
+    /* Clean borderless key-value grid inside Patch card */
+    .meta-list { display: flex; flex-direction: column; gap: 6px; }
+    .meta-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 5px 0;
-      font-size: 12px;
-      border-top: 1px solid var(--_line);
+      min-height: 22px;
+      font-size: 12.5px;
     }
-    .row:first-child { border-top: none; padding-top: 0; }
-    .row:last-child { padding-bottom: 0; }
-    .row .k { color: var(--_fg-muted); }
-    .row .v {
+    .meta-row .k { color: var(--_fg-muted); flex: none; }
+    .meta-row .v {
       color: var(--_fg);
       font-variant-numeric: tabular-nums;
       text-align: right;
-      white-space: nowrap;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 65%;
+      white-space: nowrap;
     }
-    .row .v.mono { font-family: var(--_mono); font-size: 11.5px; color: var(--_fg-2); }
+    .path-btn {
+      all: unset;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      max-width: 100%;
+      padding: 2px 6px;
+      margin-right: -6px;
+      border-radius: 5px;
+      font-family: var(--_mono);
+      font-size: 11.5px;
+      color: var(--_fg-2);
+      cursor: pointer;
+      transition: background-color 0.12s ease, color 0.12s ease;
+    }
+    .path-btn:hover { background: var(--_hover); color: var(--_fg); }
+    .path-btn svg { width: 12px; height: 12px; flex: none; opacity: 0.6; }
 
-    /* Neo capsule pills with optional pulsing live indicator */
+    /* Compact Update Strip */
+    .update-strip {
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .update-info { min-width: 0; flex: 1 1 150px; }
+    .update-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--_fg);
+    }
+    .update-sub {
+      margin-top: 2px;
+      font-size: 11.5px;
+      color: var(--_fg-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .update-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+
+    /* Capsule status pills */
     .pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      height: 22px;
-      padding: 0 9px;
+      height: 21px;
+      padding: 0 8px;
       border-radius: 999px;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
       white-space: nowrap;
       background: var(--_fill);
       color: var(--_fg-muted);
@@ -231,8 +281,8 @@
     .pill.warn { color: var(--_warn); background: var(--_warn-soft); }
     .pill.err { color: var(--_bad); background: var(--_bad-soft); }
 
-    /* Neo Toolkit Buttons (h-7 / 28px, rounded-md / 6px, font-medium) */
-    .actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
+    /* Neo Toolkit Monochrome + Contextual Primary Buttons (h-7 / 28px, rounded-md / 6px) */
+    .btn-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -242,17 +292,17 @@
       padding: 0 10px;
       border-radius: var(--r-md);
       font: inherit;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 500;
       line-height: 1;
       border: 1px solid transparent;
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
-      transition: color .12s ease, background-color .12s ease, border-color .12s ease, opacity .12s ease;
+      transition: color 0.12s ease, background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
     }
-    .btn svg { width: 14px; height: 14px; flex: none; stroke-width: 1.75; }
-    .btn:disabled { opacity: 0.45; pointer-events: none; }
+    .btn svg { width: 13.5px; height: 13.5px; flex: none; stroke-width: 1.75; }
+    .btn:disabled { opacity: 0.42; pointer-events: none; }
     .btn-primary {
       background: var(--_primary);
       color: var(--_primary-fg);
@@ -260,123 +310,160 @@
     .btn-primary:hover { opacity: 0.9; }
     .btn-secondary {
       background: var(--_secondary);
-      color: var(--_fg-2);
+      color: var(--_fg);
+      border-color: var(--_card-border);
     }
-    .btn-secondary:hover { color: var(--_fg); background: var(--_press); }
+    .btn-secondary:hover { background: var(--_press); }
     .btn-ghost {
       background: transparent;
       color: var(--_fg-muted);
-      border-color: var(--_card-border);
     }
     .btn-ghost:hover { color: var(--_fg); background: var(--_hover); }
-    .btn.busy svg { animation: spin 1s linear infinite; }
+    .btn-ghost.danger:hover { color: var(--_bad); background: var(--_bad-soft); }
+    .btn.busy svg { animation: spin 0.9s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Status banner */
+    /* Inline status toast */
     .msg {
       display: none;
       font-size: 12px;
       padding: 8px 11px;
       border-radius: 8px;
-      background: var(--_fill);
       border: 1px solid var(--_card-border);
+      background: var(--_fill);
       white-space: pre-wrap;
       word-break: break-word;
     }
     .msg.show { display: block; }
-    .msg.err { color: var(--_bad); border-color: color-mix(in srgb, var(--_bad) 35%, transparent); background: var(--_bad-soft); }
-    .msg.ok { color: var(--_ok); border-color: color-mix(in srgb, var(--_ok) 35%, transparent); background: var(--_ok-soft); }
+    .msg.err { color: var(--_bad); border-color: color-mix(in srgb, var(--_bad) 32%, transparent); background: var(--_bad-soft); }
+    .msg.ok { color: var(--_ok); border-color: color-mix(in srgb, var(--_ok) 32%, transparent); background: var(--_ok-soft); }
 
-    /* Inset preview container (sunken fill) */
-    .preview {
-      background: var(--_fill);
-      border: 1px solid var(--_line);
-      border-radius: 8px;
-      padding: 10px 12px;
+    /* Single-surface BiDi Verification Sample (no nested double box) */
+    .preview-body {
+      padding: 12px 14px 13px;
       direction: rtl;
       text-align: right;
       unicode-bidi: isolate;
       font-size: 12.5px;
-      line-height: 1.55;
+      line-height: 1.6;
     }
-    .preview p { margin: 0 0 6px; font-weight: 600; }
-    .preview ul { margin: 0; padding-right: 18px; padding-left: 0; }
-    .preview li { margin: 2px 0; }
-    .preview code {
+    .preview-body .sample-title {
+      margin: 0 0 6px;
+      font-weight: 600;
+      color: var(--_fg);
+    }
+    .preview-body ul {
+      margin: 0;
+      padding-right: 16px;
+      padding-left: 0;
+      color: var(--_fg-2);
+    }
+    .preview-body li { margin: 3px 0; }
+    .preview-body code {
       direction: ltr;
       unicode-bidi: isolate;
       display: inline-block;
       font-family: var(--_mono);
       font-size: 11.5px;
-      padding: 1px 5px;
+      padding: 0 5px;
       border-radius: var(--r-sm);
-      background: var(--_secondary);
+      background: var(--_fill);
+      border: 1px solid var(--_line);
       color: var(--code-foreground, var(--_fg));
     }
   </style>
 </head>
 <body>
   <header class="header">
-    <img src="/logo.svg" alt="" />
+    <div class="header-icon">
+      <img src="/logo.svg" alt="" />
+    </div>
     <div class="titles">
       <h1>Arabic / RTL Formatting Fix</h1>
-      <div class="sub" id="plugin-version">Plugin</div>
+      <div class="sub" id="plugin-subtitle">Loading...</div>
     </div>
     <span class="pill" id="status-pill"><span class="dot"></span><span>Checking</span></span>
   </header>
 
   <main class="page">
+    <!-- Unified Runtime & Patch Control Card -->
     <section class="card">
-      <div class="card-head">
-        <h2>Patch Status</h2>
-        <span class="pill" id="platform-pill" hidden><span class="dot"></span><span id="platform-label">OS</span></span>
+      <div class="card-body">
+        <div class="section-label">
+          <span>Runtime</span>
+          <span id="state-text" style="font-weight: 500; text-transform: none; letter-spacing: 0;">-</span>
+        </div>
+        <div class="meta-list">
+          <div class="meta-row">
+            <span class="k">Antigravity</span>
+            <span class="v" id="row-app">-</span>
+          </div>
+          <div class="meta-row">
+            <span class="k">Backup</span>
+            <span class="v" id="row-backup">-</span>
+          </div>
+          <div class="meta-row">
+            <span class="k">Location</span>
+            <span class="v">
+              <button class="path-btn" id="btn-copy-path" type="button" title="Copy installation path">
+                <span id="row-dir">-</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </span>
+          </div>
+        </div>
       </div>
-      <div class="rows">
-        <div class="row"><span class="k">State</span><span class="v" id="row-status">-</span></div>
-        <div class="row"><span class="k">Antigravity</span><span class="v" id="row-app">-</span></div>
-        <div class="row"><span class="k">Backup</span><span class="v" id="row-backup">-</span></div>
-        <div class="row"><span class="k">Install Path</span><span class="v mono" id="row-dir">-</span></div>
-      </div>
-      <div class="actions">
-        <button class="btn btn-primary" id="btn-apply">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
-          Re-apply
-        </button>
-        <button class="btn btn-ghost" id="btn-restore">
+      <div class="card-foot">
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="btn-apply" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            <span id="btn-apply-label">Re-apply</span>
+          </button>
+        </div>
+        <button class="btn btn-ghost danger" id="btn-restore" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
           Restore original
         </button>
       </div>
     </section>
 
+    <!-- Compact Inline Updates Strip -->
     <section class="card">
-      <div class="card-head">
-        <h2>Updates</h2>
-        <span class="pill" id="update-pill" hidden><span class="dot"></span><span>Up to date</span></span>
-      </div>
-      <p class="desc" id="update-desc">Check GitHub for a newer version of this plugin.</p>
-      <div class="actions">
-        <button class="btn btn-secondary" id="btn-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
-          Check for updates
-        </button>
-        <button class="btn btn-primary" id="btn-update" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-          Update
-        </button>
+      <div class="update-strip">
+        <div class="update-info">
+          <div class="update-title">
+            <span>Updates</span>
+            <span class="pill" id="update-pill" hidden><span class="dot"></span><span>Up to date</span></span>
+          </div>
+          <div class="update-sub" id="update-desc">Checking GitHub...</div>
+        </div>
+        <div class="update-actions">
+          <button class="btn btn-ghost" id="btn-check" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            Check
+          </button>
+          <button class="btn btn-primary" id="btn-update" type="button" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            Update
+          </button>
+        </div>
       </div>
     </section>
 
     <div class="msg" id="msg"></div>
 
+    <!-- Clean Single-Surface BiDi Verification Card -->
     <section class="card">
-      <div class="card-head"><h2>BiDi Preview</h2></div>
-      <div class="preview" dir="rtl">
-        <p>1. نظرة عامة على معمارية النظام (System Architecture):</p>
+      <div class="card-foot" style="border-top: none; border-bottom: 1px solid var(--_line); padding: 8px 14px;">
+        <span class="section-label" style="margin: 0;">Live BiDi Sample</span>
+        <span style="font-size: 11px; color: var(--_fg-faint);">RTL + LTR Isolation</span>
+      </div>
+      <div class="preview-body" dir="rtl">
+        <p class="sample-title">1. معمارية النظام (System Architecture):</p>
         <ul>
-          <li><code>1. Backend API</code> → يعتمد على واجهة برمجية مبنية بـ <code>Node.js</code>.</li>
-          <li>مزامنة البيانات عبر <code>WebSockets</code> بنسبة 60% إلى 80%.</li>
-          <li>تبقى الأكواد دائماً من اليسار إلى اليمين <code>direction: ltr</code>.</li>
+          <li>يعتمد الخادم على <code>Node.js</code> وواجهة <code>REST API</code>.</li>
+          <li>المزامنة عبر <code>WebSockets</code> بزمن استجابة أقل من 20ms.</li>
+          <li>تبقى الأكواد دائماً LTR مثل <code>direction: ltr</code>.</li>
         </ul>
       </div>
     </section>
@@ -386,8 +473,8 @@
     const pageUrl = new URL(window.__SIDECAR_URL || window.location.href);
     const token = pageUrl.searchParams.get('token') || '';
     const $ = (id) => document.getElementById(id);
+    let fullInstallPath = '';
 
-    // Sync light/dark data-theme dynamically when host pushes theme-change
     function syncThemeMode(bg) {
       if (!bg) return;
       const m = bg.match(/\d+/g);
@@ -396,7 +483,7 @@
         light = (0.2126 * Number(m[0]) + 0.7152 * Number(m[1]) + 0.0722 * Number(m[2])) / 255 > 0.5;
       } else if (/^#[0-9a-f]{6}$/i.test(bg.trim())) {
         const h = bg.trim();
-        light = (0.2126 * parseInt(h.slice(1,3),16) + 0.7152 * parseInt(h.slice(3,5),16) + 0.0722 * parseInt(h.slice(5,7),16)) / 255 > 0.5;
+        light = (0.2126 * parseInt(h.slice(1, 3), 16) + 0.7152 * parseInt(h.slice(3, 5), 16) + 0.0722 * parseInt(h.slice(5, 7), 16)) / 255 > 0.5;
       }
       document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
     }
@@ -437,29 +524,58 @@
       if (p === 'win32') return 'Windows';
       if (p === 'linux') return 'Linux / Omarchy';
       if (p === 'darwin') return 'macOS';
-      return p || 'Unknown';
+      return p || '';
+    }
+
+    function shortenPath(p) {
+      if (!p) return '-';
+      const sep = p.includes('\\') ? '\\' : '/';
+      const parts = p.split(/[\\/]+/).filter(Boolean);
+      if (parts.length <= 2) return p;
+      return `...${sep}${parts.slice(-2).join(sep)}`;
     }
 
     function renderStatus(s) {
-      $('plugin-version').textContent = s.pluginVersion ? `Plugin v${s.pluginVersion}` : 'Plugin';
+      const parts = [];
+      if (s.pluginVersion) parts.push(`v${s.pluginVersion}`);
+      const osLabel = formatPlatform(s.platform);
+      if (osLabel) parts.push(osLabel);
+      $('plugin-subtitle').textContent = parts.join(' · ') || 'Plugin';
+
       $('row-app').textContent = s.appVersion ? `v${s.appVersion}` : 'Not found';
       $('row-backup').textContent = s.hasBackup ? 'Available' : 'None';
-      $('row-dir').textContent = s.appDir || '-';
-      $('row-dir').title = s.appDir || '';
 
-      if (s.platform) {
-        setPill($('platform-pill'), formatPlatform(s.platform), '');
-      }
+      fullInstallPath = s.appDir || '';
+      $('row-dir').textContent = shortenPath(fullInstallPath);
+      $('btn-copy-path').title = fullInstallPath ? `${fullInstallPath} (click to copy)` : 'Unavailable';
+
+      const applyBtn = $('btn-apply');
+      const applyLabel = $('btn-apply-label');
+      const restoreBtn = $('btn-restore');
+
       if (s.installed) {
         setPill($('status-pill'), 'Active', 'ok', true);
-        $('row-status').textContent = 'Applied';
+        $('state-text').textContent = 'Patched cleanly';
+        $('state-text').style.color = 'var(--_ok)';
+        applyBtn.className = 'btn btn-secondary';
+        applyLabel.textContent = 'Re-apply';
+        restoreBtn.disabled = !s.hasBackup;
       } else if (s.outdated) {
         setPill($('status-pill'), 'Outdated', 'warn');
-        $('row-status').textContent = 'Older version applied';
+        $('state-text').textContent = 'Older patch detected';
+        $('state-text').style.color = 'var(--_warn)';
+        applyBtn.className = 'btn btn-primary';
+        applyLabel.textContent = 'Upgrade patch';
+        restoreBtn.disabled = !s.hasBackup;
       } else {
         setPill($('status-pill'), 'Not applied', 'err');
-        $('row-status').textContent = 'Not applied';
+        $('state-text').textContent = 'Patch required';
+        $('state-text').style.color = 'var(--_bad)';
+        applyBtn.className = 'btn btn-primary';
+        applyLabel.textContent = 'Apply fix';
+        restoreBtn.disabled = true;
       }
+
       if (s.error || s.lastError) showMsg(s.error || s.lastError, 'err');
     }
 
@@ -471,20 +587,30 @@
     async function checkUpdates() {
       const v = await api('/api/version');
       if (v.updateAvailable) {
-        setPill($('update-pill'), `v${v.latest} available`, 'warn');
-        $('update-desc').textContent = `You have v${v.installed}. Version v${v.latest} is available on GitHub.`;
+        setPill($('update-pill'), `v${v.latest} ready`, 'warn');
+        $('update-desc').textContent = `v${v.installed} installed -> v${v.latest} available on GitHub`;
         $('btn-update').hidden = false;
       } else {
         setPill($('update-pill'), 'Up to date', 'ok');
-        $('update-desc').textContent = `You have the latest version (v${v.installed}).`;
+        $('update-desc').textContent = `Latest version installed (v${v.installed})`;
         $('btn-update').hidden = true;
       }
     }
 
+    $('btn-copy-path').addEventListener('click', async () => {
+      if (!fullInstallPath || !navigator.clipboard) return;
+      try {
+        await navigator.clipboard.writeText(fullInstallPath);
+        const orig = $('row-dir').textContent;
+        $('row-dir').textContent = 'Copied path';
+        setTimeout(() => { $('row-dir').textContent = orig; }, 1200);
+      } catch (_) {}
+    });
+
     $('btn-apply').addEventListener('click', (e) => withBusy(e.currentTarget, async () => {
       try {
         renderStatus(await api('/api/apply', 'POST'));
-        showMsg('Patch applied. Restart Antigravity to load it.', 'ok');
+        showMsg('Patch applied. Press Ctrl+Shift+N or restart Antigravity to load it.', 'ok');
       } catch (err) { showMsg(err.message, 'err'); }
     }));
 
