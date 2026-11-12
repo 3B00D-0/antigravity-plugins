@@ -1,11 +1,10 @@
 'use strict';
 /**
- * Shared patch engine for arabic-rtl-fixer.
+ * Shared patch engine for arabic-rtl-fixer (Windows & Linux / Arch / Omarchy).
  *
- * Appends lib/injection.js to dist/preload.js inside Antigravity's
- * resources/app.asar and updates the ASAR integrity hash embedded in
- * Antigravity.exe. Used by both the sidecar (server.cjs) and the CLI
- * (patch_antigravity_rtl.js), so there is exactly one implementation.
+ * Appends lib/injection.js to dist/preload.js inside Antigravity's app.asar.
+ * On Windows, also updates the ASAR integrity hash embedded in Antigravity.exe.
+ * Used by both the sidecar (server.cjs) and the CLI (patch_antigravity_rtl.js).
  *
  * Backups (app.asar.bak / Antigravity.exe.bak) are always kept in sync with
  * the *currently installed* Antigravity version: whenever app.asar does not
@@ -14,6 +13,7 @@
  * from ever being written over a newer Antigravity.
  */
 
+const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const nodeFs = require('node:fs');
@@ -40,28 +40,121 @@ function sha256(buf) {
     return crypto.createHash('sha256').update(buf).digest('hex');
 }
 
-function getAntigravityDir() {
-    const localAppData = process.env.LOCALAPPDATA ||
-        path.join(process.env.USERPROFILE || '', 'AppData', 'Local');
-    const candidates = [
-        path.join(localAppData, 'Programs', 'antigravity'),
-        path.join(localAppData, 'antigravity'),
-    ];
-    for (const c of candidates) {
-        if (fs.existsSync(path.join(c, 'Antigravity.exe'))) return c;
+function findAsarInDir(dir) {
+    if (!dir) return null;
+    const nested = path.join(dir, 'resources', 'app.asar');
+    if (fs.existsSync(nested)) return { appDir: dir, asar: nested };
+    const flat = path.join(dir, 'app.asar');
+    if (fs.existsSync(flat)) return { appDir: dir, asar: flat };
+    return null;
+}
+
+function findExeInDir(dir) {
+    if (!dir) return null;
+    const names = process.platform === 'win32'
+        ? ['Antigravity.exe']
+        : ['antigravity', 'Antigravity', 'antigravity-bin'];
+    for (const name of names) {
+        const candidate = path.join(dir, name);
+        try {
+            const st = fs.statSync(candidate);
+            if (st.isFile() && st.size > 1024 * 1024) return candidate; // skip tiny shell wrappers
+        } catch (_) {}
     }
     return null;
 }
 
+function resolveFromLinuxPath() {
+    const pathEntries = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+    const binNames = ['antigravity', 'google-antigravity'];
+    const discoveredDirs = [];
+
+    for (const dir of pathEntries) {
+        for (const name of binNames) {
+            const full = path.join(dir, name);
+            if (!fs.existsSync(full)) continue;
+            try {
+                const real = fs.realpathSync(full);
+                discoveredDirs.push(path.dirname(real), path.dirname(path.dirname(real)));
+                const st = fs.statSync(real);
+                if (st.isFile() && st.size < 16384) {
+                    const text = fs.readFileSync(real, 'utf8');
+                    const matches = text.match(/\/[^\s"'`$]+(?:antigravity|Antigravity)[^\s"'`$;]*/g) || [];
+                    for (const m of matches) {
+                        const cleaned = m.replace(/\/app\.asar$/, '').replace(/\/resources$/, '');
+                        discoveredDirs.push(cleaned, path.dirname(cleaned));
+                    }
+                }
+            } catch (_) {}
+        }
+    }
+    return discoveredDirs;
+}
+
+function findInstallation() {
+    if (process.env.ANTIGRAVITY_ASAR && fs.existsSync(process.env.ANTIGRAVITY_ASAR)) {
+        const asar = path.resolve(process.env.ANTIGRAVITY_ASAR);
+        const parent = path.dirname(asar);
+        const appDir = path.basename(parent) === 'resources' ? path.dirname(parent) : parent;
+        return { appDir, asar, exe: findExeInDir(appDir) };
+    }
+
+    const candidates = [];
+    if (process.env.ANTIGRAVITY_DIR) candidates.push(process.env.ANTIGRAVITY_DIR);
+
+    if (process.platform === 'win32') {
+        const localAppData = process.env.LOCALAPPDATA ||
+            path.join(process.env.USERPROFILE || os.homedir(), 'AppData', 'Local');
+        const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+        candidates.push(
+            path.join(localAppData, 'Programs', 'antigravity'),
+            path.join(localAppData, 'antigravity'),
+            path.join(programFiles, 'antigravity'),
+            path.join(programFiles, 'Antigravity'),
+        );
+    } else {
+        const home = os.homedir();
+        candidates.push(
+            '/opt/antigravity',
+            '/opt/Antigravity',
+            '/opt/google/antigravity',
+            '/usr/lib/antigravity',
+            '/usr/lib/Antigravity',
+            '/usr/share/antigravity',
+            path.join(home, '.local', 'share', 'antigravity'),
+            path.join(home, '.local', 'opt', 'antigravity'),
+            ...resolveFromLinuxPath(),
+        );
+    }
+
+    const seen = new Set();
+    for (const dir of candidates) {
+        if (!dir || seen.has(dir)) continue;
+        seen.add(dir);
+        const found = findAsarInDir(dir);
+        if (found) {
+            return { ...found, exe: findExeInDir(found.appDir) };
+        }
+    }
+    return null;
+}
+
+function getAntigravityDir() {
+    const inst = findInstallation();
+    return inst ? inst.appDir : null;
+}
+
 function getPaths() {
-    const appDir = getAntigravityDir();
-    if (!appDir) throw new Error('Antigravity installation not found.');
+    const inst = findInstallation();
+    if (!inst) throw new Error('Antigravity installation not found.');
+    const requireExeIntegrity = process.platform === 'win32';
     return {
-        appDir,
-        asar: path.join(appDir, 'resources', 'app.asar'),
-        asarBak: path.join(appDir, 'resources', 'app.asar.bak'),
-        exe: path.join(appDir, 'Antigravity.exe'),
-        exeBak: path.join(appDir, 'Antigravity.exe.bak'),
+        appDir: inst.appDir,
+        asar: inst.asar,
+        asarBak: `${inst.asar}.bak`,
+        exe: inst.exe,
+        exeBak: inst.exe ? `${inst.exe}.bak` : null,
+        requireExeIntegrity,
     };
 }
 
@@ -98,16 +191,34 @@ function checkStatus() {
             const p = getPaths();
             const asar = readAsar(fs.readFileSync(p.asar));
             const installed = asar.preload.includes(MARKER);
+            const hasBackup = fs.existsSync(p.asarBak) && (!p.requireExeIntegrity || (p.exeBak && fs.existsSync(p.exeBak)));
             return {
                 installed,
                 outdated: !installed && asar.preload.includes(MARKER_PREFIX),
-                hasBackup: fs.existsSync(p.asarBak) && fs.existsSync(p.exeBak),
+                hasBackup,
                 appVersion: asar.appVersion,
+                platform: process.platform,
+                appDir: p.appDir,
             };
         } catch (e) {
-            return { installed: false, outdated: false, hasBackup: false, appVersion: null, error: e.message };
+            return {
+                installed: false,
+                outdated: false,
+                hasBackup: false,
+                appVersion: null,
+                platform: process.platform,
+                error: e.message,
+            };
         }
     });
+}
+
+function wrapPermissionError(err, targetPath) {
+    if (err && (err.code === 'EACCES' || err.code === 'EPERM') && process.platform !== 'win32') {
+        const cli = path.resolve(__dirname, '..', 'patch_antigravity_rtl.js');
+        return new Error(`Permission denied writing ${targetPath}. Run once with sudo:\n  sudo node "${cli}"`);
+    }
+    return err;
 }
 
 /**
@@ -118,9 +229,13 @@ function syncBackups(p) {
     const current = readAsar(fs.readFileSync(p.asar));
     if (!current.preload.includes(MARKER_PREFIX)) {
         // Unpatched (fresh install or Antigravity just auto-updated): refresh backups.
-        fs.copyFileSync(p.asar, p.asarBak);
-        fs.copyFileSync(p.exe, p.exeBak);
-    } else if (!fs.existsSync(p.asarBak) || !fs.existsSync(p.exeBak)) {
+        try {
+            fs.copyFileSync(p.asar, p.asarBak);
+            if (p.exe && p.exeBak) fs.copyFileSync(p.exe, p.exeBak);
+        } catch (err) {
+            throw wrapPermissionError(err, p.asarBak);
+        }
+    } else if (!fs.existsSync(p.asarBak) || (p.requireExeIntegrity && (!p.exeBak || !fs.existsSync(p.exeBak)))) {
         throw new Error('Antigravity is patched but the backups are missing. Reinstall Antigravity, then apply again.');
     }
 
@@ -135,16 +250,21 @@ function syncBackups(p) {
 }
 
 function writeFileInPlace(target, data) {
-    const fd = fs.openSync(target, 'r+');
     try {
-        fs.writeSync(fd, data, 0, data.length, 0);
-        fs.ftruncateSync(fd, data.length);
-    } finally {
-        fs.closeSync(fd);
+        const fd = fs.openSync(target, 'r+');
+        try {
+            fs.writeSync(fd, data, 0, data.length, 0);
+            fs.ftruncateSync(fd, data.length);
+        } finally {
+            fs.closeSync(fd);
+        }
+    } catch (err) {
+        throw wrapPermissionError(err, target);
     }
 }
 
 function replaceExe(exePath, bytes) {
+    if (!exePath || !bytes) return;
     if (fs.existsSync(exePath)) {
         try {
             const current = fs.readFileSync(exePath);
@@ -154,12 +274,17 @@ function replaceExe(exePath, bytes) {
     try {
         fs.writeFileSync(exePath, bytes);
         return;
-    } catch (_) {}
+    } catch (err) {
+        if (process.platform !== 'win32' && (err.code === 'EACCES' || err.code === 'EPERM')) {
+            throw wrapPermissionError(err, exePath);
+        }
+    }
 
     const dir = path.dirname(exePath);
+    const base = path.basename(exePath);
     try {
         for (const f of fs.readdirSync(dir)) {
-            if (f.startsWith('Antigravity.exe.old_') || f === 'Antigravity.exe.running_old') {
+            if (f.startsWith(`${base}.old_`) || f === `${base}.running_old`) {
                 try { fs.unlinkSync(path.join(dir, f)); } catch (_) {}
             }
         }
@@ -193,20 +318,30 @@ function applyPatch() {
         prefix.writeUInt32LE(headerJson.length, 12);
         const newAsar = Buffer.concat([prefix, headerJson, Buffer.alloc(padding, 0), clean.payload, newPreload]);
 
-        // Verify the exe can be updated BEFORE touching anything, otherwise the
-        // ASAR integrity check would stop Antigravity from launching.
-        const exeBytes = fs.readFileSync(p.exeBak);
-        const idx = exeBytes.indexOf(Buffer.from(clean.headerHash, 'ascii'));
-        if (idx === -1) {
-            throw new Error('ASAR integrity hash not found in Antigravity.exe.bak. This Antigravity build is not supported yet.');
+        // Update ASAR integrity hash in binary when required (Windows) or present (optional on Linux).
+        let patchedExeBytes = null;
+        if (p.exeBak && fs.existsSync(p.exeBak)) {
+            const exeBytes = fs.readFileSync(p.exeBak);
+            const idx = exeBytes.indexOf(Buffer.from(clean.headerHash, 'ascii'));
+            if (idx !== -1) {
+                Buffer.from(sha256(headerJson), 'ascii').copy(exeBytes, idx);
+                patchedExeBytes = exeBytes;
+            } else if (p.requireExeIntegrity) {
+                throw new Error('ASAR integrity hash not found in Antigravity.exe.bak. This Antigravity build is not supported yet.');
+            }
+        } else if (p.requireExeIntegrity) {
+            throw new Error('Antigravity.exe.bak is missing. Reinstall Antigravity, then apply again.');
         }
-        Buffer.from(sha256(headerJson), 'ascii').copy(exeBytes, idx);
 
-        replaceExe(p.exe, exeBytes);
+        if (patchedExeBytes && p.exe) {
+            replaceExe(p.exe, patchedExeBytes);
+        }
         try {
             writeFileInPlace(p.asar, newAsar);
         } catch (e) {
-            replaceExe(p.exe, fs.readFileSync(p.exeBak)); // roll back to a consistent pair
+            if (patchedExeBytes && p.exe && p.exeBak && fs.existsSync(p.exeBak)) {
+                replaceExe(p.exe, fs.readFileSync(p.exeBak)); // roll back to a consistent pair
+            }
             throw e;
         }
         return checkStatus();
@@ -216,17 +351,19 @@ function applyPatch() {
 function restoreOriginal() {
     return withRawAsar(() => {
         const p = getPaths();
-        if (!fs.existsSync(p.asarBak) || !fs.existsSync(p.exeBak)) {
+        if (!fs.existsSync(p.asarBak)) {
             throw new Error('No backups found; nothing to restore.');
         }
         const current = readAsar(fs.readFileSync(p.asar));
         if (!current.preload.includes(MARKER_PREFIX)) {
             return checkStatus(); // already original (maybe a newer version): never downgrade
         }
-        replaceExe(p.exe, fs.readFileSync(p.exeBak));
+        if (p.exe && p.exeBak && fs.existsSync(p.exeBak)) {
+            replaceExe(p.exe, fs.readFileSync(p.exeBak));
+        }
         writeFileInPlace(p.asar, fs.readFileSync(p.asarBak));
         return checkStatus();
     });
 }
 
-module.exports = { MARKER, checkStatus, applyPatch, restoreOriginal, getAntigravityDir };
+module.exports = { MARKER, checkStatus, applyPatch, restoreOriginal, getAntigravityDir, getPaths };

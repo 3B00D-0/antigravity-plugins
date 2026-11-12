@@ -1,0 +1,9 @@
+# Enforce LF line endings for shell scripts & Unix tools on Omarchy/Linux
+*.sh text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf

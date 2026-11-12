@@ -25,6 +25,8 @@ const PLUGIN_FILES = [
     'lib/patcher.cjs',
     'lib/injection.js',
     'patch_antigravity_rtl.js',
+    'patch_antigravity_rtl.py',
+    'install.sh',
     'Install-RTL-Fix.bat',
     'Restore-Original.bat',
     'sidecars/rtl_fixer_panel/sidecar.json',
@@ -85,6 +87,9 @@ async function updatePlugin() {
         const tmp = dest + '.download';
         fs.writeFileSync(tmp, buf);
         fs.renameSync(tmp, dest);
+        if (process.platform !== 'win32' && /\.(sh|js|py)$/.test(rel)) {
+            try { fs.chmodSync(dest, 0o755); } catch (_) {}
+        }
     }
     return loadPatcher().applyPatch();
 }

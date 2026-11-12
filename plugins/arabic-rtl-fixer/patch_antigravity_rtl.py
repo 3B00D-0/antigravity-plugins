@@ -224,24 +224,61 @@ else:
 """
 
 
-def get_antigravity_dir():
-    local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser(r"~\AppData\Local"))
-    candidates = [
-        os.path.join(local_app_data, "Programs", "antigravity"),
-        os.path.join(local_app_data, "antigravity"),
-    ]
+def _find_asar_and_exe():
+    env_asar = os.environ.get("ANTIGRAVITY_ASAR")
+    if env_asar and os.path.exists(env_asar):
+        parent = os.path.dirname(env_asar)
+        app_dir = os.path.dirname(parent) if os.path.basename(parent) == "resources" else parent
+        return app_dir, env_asar, _find_exe(app_dir)
+
+    candidates = []
+    if os.environ.get("ANTIGRAVITY_DIR"):
+        candidates.append(os.environ["ANTIGRAVITY_DIR"])
+
+    if os.name == "nt":
+        local_app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser(r"~\AppData\Local"))
+        program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+        candidates.extend([
+            os.path.join(local_app_data, "Programs", "antigravity"),
+            os.path.join(local_app_data, "antigravity"),
+            os.path.join(program_files, "antigravity"),
+            os.path.join(program_files, "Antigravity"),
+        ])
+    else:
+        candidates.extend([
+            "/opt/antigravity",
+            "/opt/Antigravity",
+            "/opt/google/antigravity",
+            "/usr/lib/antigravity",
+            "/usr/lib/Antigravity",
+            "/usr/share/antigravity",
+            os.path.expanduser("~/.local/share/antigravity"),
+            os.path.expanduser("~/.local/opt/antigravity"),
+        ])
+
     for c in candidates:
-        if os.path.exists(os.path.join(c, "Antigravity.exe")):
-            return c
+        for asar_rel in (("resources", "app.asar"), ("app.asar",)):
+            asar = os.path.join(c, *asar_rel)
+            if os.path.exists(asar):
+                return c, asar, _find_exe(c)
+
     raise FileNotFoundError("Could not find Antigravity installation directory.")
 
 
+def _find_exe(app_dir):
+    names = ["Antigravity.exe"] if os.name == "nt" else ["antigravity", "Antigravity", "antigravity-bin"]
+    for name in names:
+        cand = os.path.join(app_dir, name)
+        if os.path.isfile(cand) and os.path.getsize(cand) > 1024 * 1024:
+            return cand
+    return None
+
+
 def patch_antigravity():
-    app_dir = get_antigravity_dir()
-    asar_path = os.path.join(app_dir, "resources", "app.asar")
-    asar_bak = os.path.join(app_dir, "resources", "app.asar.bak")
-    exe_path = os.path.join(app_dir, "Antigravity.exe")
-    exe_bak = os.path.join(app_dir, "Antigravity.exe.bak")
+    app_dir, asar_path, exe_path = _find_asar_and_exe()
+    asar_bak = asar_path + ".bak"
+    exe_bak = (exe_path + ".bak") if exe_path else None
+    require_exe_integrity = os.name == "nt"
 
     print(f"[*] Found Antigravity at: {app_dir}")
 
@@ -259,8 +296,9 @@ def patch_antigravity():
     if MARKER_PREFIX not in cur_preload:
         print("[+] Refreshing clean backups from current installed version...")
         shutil.copy2(asar_path, asar_bak)
-        shutil.copy2(exe_path, exe_bak)
-    elif not os.path.exists(asar_bak) or not os.path.exists(exe_bak):
+        if exe_path and exe_bak:
+            shutil.copy2(exe_path, exe_bak)
+    elif not os.path.exists(asar_bak) or (require_exe_integrity and (not exe_bak or not os.path.exists(exe_bak))):
         raise RuntimeError("Antigravity is already patched but backups are missing. Reinstall or verify installation.")
 
     # Always read from clean backup
@@ -312,48 +350,46 @@ def patch_antigravity():
         + new_payload
     )
 
-    with open(exe_bak, "rb") as f:
-        exe_bytes = f.read()
+    if exe_bak and os.path.exists(exe_bak) and exe_path:
+        with open(exe_bak, "rb") as f:
+            exe_bytes = f.read()
 
-    old_hash_bytes = old_header_hash.encode("ascii")
-    new_hash_bytes = new_header_hash.encode("ascii")
+        old_hash_bytes = old_header_hash.encode("ascii")
+        new_hash_bytes = new_header_hash.encode("ascii")
 
-    if old_hash_bytes not in exe_bytes:
-        raise RuntimeError("Could not locate original ASAR header hash in Antigravity.exe.bak!")
-
-    patched_exe_bytes = exe_bytes.replace(old_hash_bytes, new_hash_bytes)
-
-    temp_old_exe = exe_path + ".running_old"
-    try:
-        with open(exe_path, "wb") as f:
-            f.write(patched_exe_bytes)
-    except PermissionError:
-        if os.path.exists(temp_old_exe):
+        if old_hash_bytes in exe_bytes:
+            patched_exe_bytes = exe_bytes.replace(old_hash_bytes, new_hash_bytes)
+            temp_old_exe = exe_path + ".running_old"
             try:
-                os.remove(temp_old_exe)
-            except OSError:
-                pass
-        os.rename(exe_path, temp_old_exe)
-        with open(exe_path, "wb") as f:
-            f.write(patched_exe_bytes)
+                with open(exe_path, "wb") as f:
+                    f.write(patched_exe_bytes)
+            except PermissionError:
+                if os.path.exists(temp_old_exe):
+                    try:
+                        os.remove(temp_old_exe)
+                    except OSError:
+                        pass
+                os.rename(exe_path, temp_old_exe)
+                with open(exe_path, "wb") as f:
+                    f.write(patched_exe_bytes)
+            print("[+] Updated ASAR integrity checksum in binary")
+        elif require_exe_integrity:
+            raise RuntimeError("Could not locate original ASAR header hash in Antigravity.exe.bak!")
 
     with open(asar_path, "r+b") as f:
         f.seek(0)
         f.write(new_asar_bytes)
         f.truncate(len(new_asar_bytes))
 
-    print(f"[+] Patched resources/app.asar (hash: {new_header_hash[:16]}...)")
-    print("[+] Updated ASAR integrity checksum in Antigravity.exe")
+    print(f"[+] Patched {asar_path} (hash: {new_header_hash[:16]}...)")
     print("\n[SUCCESS] Antigravity 2.0 Arabic/RTL fix is installed!")
     print("-> Please press Ctrl+Shift+N (or restart Antigravity 2.0) to see the fix.")
 
 
 def restore_antigravity():
-    app_dir = get_antigravity_dir()
-    asar_path = os.path.join(app_dir, "resources", "app.asar")
-    asar_bak = os.path.join(app_dir, "resources", "app.asar.bak")
-    exe_path = os.path.join(app_dir, "Antigravity.exe")
-    exe_bak = os.path.join(app_dir, "Antigravity.exe.bak")
+    app_dir, asar_path, exe_path = _find_asar_and_exe()
+    asar_bak = asar_path + ".bak"
+    exe_bak = (exe_path + ".bak") if exe_path else None
 
     if os.path.exists(asar_bak):
         with open(asar_bak, "rb") as src, open(asar_path, "r+b") as dst:
@@ -361,11 +397,11 @@ def restore_antigravity():
             dst.seek(0)
             dst.write(data)
             dst.truncate(len(data))
-        print("[+] Restored resources/app.asar from backup.")
+        print(f"[+] Restored {asar_path} from backup.")
     else:
         print("[!] No app.asar.bak found.")
 
-    if os.path.exists(exe_bak):
+    if exe_bak and exe_path and os.path.exists(exe_bak):
         temp_old_exe = exe_path + ".running_old"
         try:
             shutil.copy2(exe_bak, exe_path)
@@ -377,9 +413,7 @@ def restore_antigravity():
                     pass
             os.rename(exe_path, temp_old_exe)
             shutil.copy2(exe_bak, exe_path)
-        print("[+] Restored Antigravity.exe from backup.")
-    else:
-        print("[!] No Antigravity.exe.bak found.")
+        print(f"[+] Restored {exe_path} from backup.")
 
 
 if __name__ == "__main__":

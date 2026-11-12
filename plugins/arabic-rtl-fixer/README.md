@@ -20,16 +20,22 @@ By default, Antigravity 2.0 mounts Markdown paragraphs (`<p>`), headings (`<h1>`
 
 ## Installation
 
-Run in Windows **PowerShell**:
+### Windows (PowerShell)
 
 ```powershell
 irm https://raw.githubusercontent.com/3B00D-0/antigravity-plugins/main/plugins/arabic-rtl-fixer/install.ps1 | iex
+```
+
+### Linux / Arch / Omarchy (Bash)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/3B00D-0/antigravity-plugins/main/plugins/arabic-rtl-fixer/install.sh | bash
 ```
 
 After running, reopen Antigravity 2.0 (or press `Ctrl + Shift + N`).
 
 ## Technical Details
 
-1. **BiDi Isolation (`preload.js`)**: Applies `unicode-bidi: plaintext` and per-element `dir="rtl"` / `dir="auto"` detection across `<p>`, `<h1>`–`<h6>`, `<li>`, `<ul>`, `<ol>`, `<blockquote>`, `<table>`, `<th>`, `<td>`, and the Lexical chat editor while keeping `<pre>`, `<code>`, and `.katex` strictly `ltr`.
-2. **ASAR & Integrity Checksum Update**: Appends the updated `preload.js` to `resources/app.asar`, recalculates the Chromium Pickle header and SHA-256 block hashes, and updates the integrity resource in `Antigravity.exe` (saving `.bak` backups automatically).
-3. **Sidecar Panel**: Installs under `~/.gemini/config/plugins/arabic-rtl-fixer` so you can check status, re-apply after app updates, or restore original files directly from the Antigravity **Plugins** tab.
+1. **BiDi Isolation (`preload.js`)**: Applies prose-aware `dir="rtl"` / `dir="ltr"` / `unicode-bidi: isolate` detection across `<p>`, `<h1>`–`<h6>`, `<li>`, `<ul>`, `<ol>`, `<blockquote>`, alert callouts, `<table>`, `<th>`, `<td>`, and plaintext Arabic `<pre>` blocks while keeping code (`<code>`, `<pre>`) and `.katex` math strictly `ltr`.
+2. **Cross-Platform ASAR Patcher (`Windows` & `Linux`)**: Appends the updated `preload.js` to `app.asar`, recalculates the Chromium Pickle header and SHA-256 block hashes, updates the ASAR integrity resource in `Antigravity.exe` on Windows, and maintains version-synced `.bak` backups automatically.
+3. **Sidecar Panel**: Installs under `~/.gemini/config/plugins/arabic-rtl-fixer` so you can check status, re-apply after app updates, check GitHub for plugin updates, or restore original files directly from the Antigravity **Plugins** tab.
