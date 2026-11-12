@@ -290,9 +290,14 @@
         // <pre> blocks: keep code LTR, but allow Arabic plaintext copy-paste blocks to flow RTL
         if (tag === 'pre') {
             const preText = el.textContent || '';
-            if (hasArabic(preText)) {
+            const codeChild = el.querySelector ? el.querySelector('code') : null;
+            const cls = codeChild && typeof codeChild.className === 'string' ? codeChild.className : '';
+            const hasExplicitCodeLang = /language-(?!(?:text|plaintext|plain|txt|md|markdown|none)\b)[a-z0-9_-]+/i.test(cls);
+
+            if (!hasExplicitCodeLang && hasArabic(preText)) {
                 const { ar, en } = countChars(preText);
-                const targetDir = (ar > en * 0.6) ? 'rtl' : 'ltr';
+                const startsRtl = detectDir(preText) === 'rtl';
+                const targetDir = ((startsRtl && ar >= en) || ar > en * 2.0) ? 'rtl' : 'ltr';
                 if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
             } else if (el.getAttribute('dir') !== 'ltr') {
                 el.setAttribute('dir', 'ltr');

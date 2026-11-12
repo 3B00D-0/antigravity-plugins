@@ -56,6 +56,12 @@ function createDom() {
         get textContent() {
             return this.childNodes.map((c) => c.textContent).join('');
         }
+        set textContent(val) {
+            this.childNodes = [];
+            this.children = [];
+            this.firstChild = null;
+            if (val !== '' && val != null) this.appendChild(String(val));
+        }
         getAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attrs, k) ? this.attrs[k] : null; }
         setAttribute(k, v) { this.attrs[k] = String(v); }
         hasAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attrs, k); }
@@ -80,6 +86,9 @@ function createDom() {
                 cur = cur.parentElement;
             }
             return null;
+        }
+        querySelector(sel) {
+            return this.querySelectorAll(sel)[0] || null;
         }
         querySelectorAll(sel) {
             const out = [];
@@ -260,12 +269,15 @@ test('Code blocks stay LTR while Arabic plaintext copy-paste <pre> blocks get RT
     const dom = createDom();
     const { el } = dom;
     const codePre = el('pre', [el('code', ['const x = 1; // تعليق بالعربي'])]);
-    const arPre = el('pre', [el('code', ['لو سمحت اطبع الـ 5 ملفات بالإعدادات دي: الخامة PLA'])]);
+    const labeledCodePre = el('pre', [el('code', { class: 'language-javascript' }, ['// شرح الدالة بالكامل باللغة العربية\nconst total = 42;'])]);
+    const arPre = el('pre', [el('code', { class: 'language-text' }, ['لو سمحت اطبع الـ 5 ملفات بالإعدادات دي: الخامة PLA'])]);
 
     dom.body.appendChild(codePre);
+    dom.body.appendChild(labeledCodePre);
     dom.body.appendChild(arPre);
     dom.mountAndRun();
 
     assert.equal(codePre.getAttribute('dir'), 'ltr');
+    assert.equal(labeledCodePre.getAttribute('dir'), 'ltr');
     assert.equal(arPre.getAttribute('dir'), 'rtl');
 });
