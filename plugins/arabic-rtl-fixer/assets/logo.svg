@@ -1,70 +1,60 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
   <defs>
-    <!-- Deep obsidian base + diagonal ambient wash from user's plugin brand palette -->
-    <linearGradient id="tileBg" x1="8" y1="8" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#190C05"/>
-      <stop offset="48%" stop-color="#090B12"/>
-      <stop offset="100%" stop-color="#07112B"/>
+    <!-- Signature diagonal light spectrum: Solar Amber -> Warm White -> Electric Blue -->
+    <linearGradient id="rtlAmber" x1="16" y1="14" x2="112" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF5A00"/>
+      <stop offset="56%" stop-color="#FFA93A"/>
+      <stop offset="100%" stop-color="#FFF2E2"/>
     </linearGradient>
 
-    <!-- Diagonal light-beam prism wash clipped inside the tile -->
-    <linearGradient id="beamGlow" x1="0" y1="128" x2="128" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FF6A00" stop-opacity="0.22"/>
-      <stop offset="45%" stop-color="#FFF5EA" stop-opacity="0.06"/>
-      <stop offset="65%" stop-color="#58B8FF" stop-opacity="0.16"/>
-      <stop offset="100%" stop-color="#1A6BFF" stop-opacity="0.24"/>
+    <linearGradient id="ltrBlue" x1="16" y1="72" x2="112" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EBF7FF"/>
+      <stop offset="44%" stop-color="#58BFFF"/>
+      <stop offset="100%" stop-color="#1769FF"/>
     </linearGradient>
-
-    <!-- Subtle glass rim highlight -->
-    <linearGradient id="rimStroke" x1="12" y1="8" x2="116" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FF9A3C" stop-opacity="0.45"/>
-      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.14"/>
-      <stop offset="100%" stop-color="#4DB2FF" stop-opacity="0.45"/>
-    </linearGradient>
-
-    <!-- RTL Flow (Warm Solar Amber -> Gold -> Cream) -->
-    <linearGradient id="rtlBeam" x1="28" y1="40" x2="100" y2="40" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFE6C7"/>
-      <stop offset="45%" stop-color="#FFA733"/>
-      <stop offset="100%" stop-color="#FF5E00"/>
-    </linearGradient>
-
-    <!-- Center BiDi Pivot (Warm White -> Ice Silver) -->
-    <linearGradient id="centerBeam" x1="40" y1="64" x2="88" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFF3E2"/>
-      <stop offset="50%" stop-color="#FFFFFF"/>
-      <stop offset="100%" stop-color="#BEE4FF"/>
-    </linearGradient>
-
-    <!-- LTR Flow (Ice White -> Sky Blue -> Electric Blue) -->
-    <linearGradient id="ltrBeam" x1="28" y1="88" x2="100" y2="88" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1E74FF"/>
-      <stop offset="55%" stop-color="#56BEFF"/>
-      <stop offset="100%" stop-color="#E5F4FF"/>
-    </linearGradient>
-
-    <clipPath id="tileClip">
-      <rect x="6" y="6" width="116" height="116" rx="28"/>
-    </clipPath>
   </defs>
 
-  <!-- Base Tile -->
-  <g clip-path="url(#tileClip)">
-    <rect x="6" y="6" width="116" height="116" rx="28" fill="url(#tileBg)"/>
-    <rect x="6" y="6" width="116" height="116" rx="28" fill="url(#beamGlow)"/>
-  </g>
-  <rect x="6.75" y="6.75" width="114.5" height="114.5" rx="27.25" stroke="url(#rimStroke)" stroke-width="1.5"/>
+  <!--
+    Pure transparent-canvas vector logomark (zero background box / zero outer tile).
+    Top RTL ribbon spans [13, 115] x [14, 56]; bottom LTR ribbon spans [13, 115] x [72, 114]
+    with a crisp 16px center negative-space gap and 180-degree rotational symmetry.
+  -->
 
-  <!-- Precision BiDi Geometry (no text elements, razor-sharp at 16px-128px) -->
-  <!-- Upper: RTL Flow (Right-to-Left) -->
-  <path d="M94 41 H36 M36 41 L50 27 M36 41 L50 55"
-        stroke="url(#rtlBeam)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Top: Right-to-Left (RTL) Ribbon -->
+  <path fill="url(#rtlAmber)" d="
+    M 15.5 31
+    L 34 15.5
+    Q 37.5 12.5 41 16
+    L 42.5 17.5
+    Q 45.5 21 42 24
+    L 36.5 28.5
+    H 108.5
+    A 6.5 6.5 0 0 1 108.5 41.5
+    H 36.5
+    L 42 46
+    Q 45.5 49 42.5 52.5
+    L 41 54
+    Q 37.5 57.5 34 54.5
+    L 15.5 39
+    Q 10.5 35 15.5 31
+    Z"/>
 
-  <!-- Middle: BiDi Axis Divider -->
-  <line x1="44" y1="64" x2="84" y2="64"
-        stroke="url(#centerBeam)" stroke-width="7.5" stroke-linecap="round"/>
-
-  <!-- Lower: LTR Flow (Left-to-Right) -->
-  <path d="M34 87 H92 M92 87 L78 73 M92 87 L78 101"
-        stroke="url(#ltrBeam)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Bottom: Left-to-Right (LTR) Ribbon -->
+  <path fill="url(#ltrBlue)" d="
+    M 112.5 97
+    L 94 112.5
+    Q 90.5 115.5 87 112
+    L 85.5 110.5
+    Q 82.5 107 86 104
+    L 91.5 99.5
+    H 19.5
+    A 6.5 6.5 0 0 1 19.5 86.5
+    H 91.5
+    L 86 82
+    Q 82.5 79 85.5 75.5
+    L 87 74
+    Q 90.5 70.5 94 73.5
+    L 112.5 89
+    Q 117.5 93 112.5 97
+    Z"/>
 </svg>

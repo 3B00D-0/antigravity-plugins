@@ -102,17 +102,12 @@
       align-items: center;
       gap: 10px;
     }
-    .header-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      background: var(--_fill);
-      border: 1px solid var(--_card-border);
-      display: grid;
-      place-items: center;
+    .header-logo {
+      width: 26px;
+      height: 26px;
+      display: block;
       flex: none;
     }
-    .header-icon img { width: 20px; height: 20px; display: block; border-radius: 4px; }
     .header .titles { min-width: 0; flex: 1; }
     .header h1 {
       margin: 0;
@@ -375,9 +370,7 @@
 </head>
 <body>
   <header class="header">
-    <div class="header-icon">
-      <img src="/logo.svg" alt="" />
-    </div>
+    <img class="header-logo" src="/logo.svg" alt="" />
     <div class="titles">
       <h1>Arabic / RTL Formatting Fix</h1>
       <div class="sub" id="plugin-subtitle">Loading...</div>
