@@ -1,4 +1,4 @@
-/* === ANTIGRAVITY_RTL_BIDI_FIX_V5 === */
+/* === ANTIGRAVITY_RTL_BIDI_FIX_V6 === */
 (() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
@@ -83,30 +83,42 @@
             unicode-bidi: isolate !important;
         }
 
+        /* Task Lists (- [ ] / - [x]) in RTL */
+        html body ul.contains-task-list[dir="rtl"],
+        html body ul[dir="rtl"]:has(> li.task-list-item) {
+            list-style-type: none !important;
+            padding-right: 1.5rem !important;
+            padding-left: 0 !important;
+        }
+        html body li.task-list-item[dir="rtl"] > input[type="checkbox"],
+        html body li.task-list-item[dir="rtl"] > p > input[type="checkbox"] {
+            margin: 0 -1.35em 0.15em 0.45em !important;
+        }
+
         /* Blockquotes & GitHub-style Callouts / Alerts (NOTE, TIP, IMPORTANT, WARNING, CAUTION) */
         html body blockquote[dir="rtl"],
-        html body blockquote:has(> p[dir="rtl"]),
+        html body blockquote:has(p[dir="rtl"], li[dir="rtl"]),
         html body div[class*="border-l"][dir="rtl"],
-        html body div[class*="border-l"]:has(> p[dir="rtl"]) {
+        html body div[class*="border-l"]:has(p[dir="rtl"], li[dir="rtl"]) {
             direction: rtl !important;
             text-align: right !important;
             border-left-width: 0px !important;
-            border-right-width: 4px !important;
+            border-right-width: 3px !important;
             border-right-style: solid !important;
             padding-right: 1rem !important;
             padding-left: 0.5rem !important;
         }
         html body .markdown-alert[dir="rtl"],
-        html body .markdown-alert:has(> p[dir="rtl"]) {
+        html body .markdown-alert:has(p[dir="rtl"], li[dir="rtl"]) {
             direction: rtl !important;
             text-align: right !important;
             border-left: none !important;
-            border-right: 4px solid currentColor !important;
+            border-right: 3px solid currentColor !important;
             padding-right: 1rem !important;
             padding-left: 0 !important;
         }
 
-        /* Tables & Table Cells (full BiDi isolation & alignment) */
+        /* Tables & Table Cells (full BiDi isolation & alignment, including GFM inline text-align) */
         html body table[dir="rtl"] {
             direction: rtl !important;
         }
@@ -136,6 +148,18 @@
             text-align: left !important;
             unicode-bidi: isolate !important;
         }
+        html body td[dir="rtl"] > p,
+        html body th[dir="rtl"] > p {
+            direction: rtl !important;
+            text-align: right !important;
+            unicode-bidi: isolate !important;
+        }
+        html body td[dir="ltr"] > p,
+        html body th[dir="ltr"] > p {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: isolate !important;
+        }
 
         /* Code & Math preservation */
         pre:not([dir="rtl"]),
@@ -154,12 +178,16 @@
             text-align: right !important;
         }
 
-        /* Inline code badges & file pills: isolate so they never invert surrounding Arabic punctuation/arrows */
-        :not(pre) > code:not([dir="rtl"]) {
+        /* Inline code badges, keyboard shortcuts & file pills */
+        :not(pre) > code:not([dir="rtl"]),
+        kbd:not([dir="rtl"]),
+        samp:not([dir="rtl"]) {
             direction: ltr !important;
             unicode-bidi: isolate !important;
         }
-        :not(pre) > code[dir="rtl"] {
+        :not(pre) > code[dir="rtl"],
+        kbd[dir="rtl"],
+        samp[dir="rtl"] {
             direction: rtl !important;
             unicode-bidi: isolate !important;
         }
@@ -285,10 +313,30 @@
 
         const text = el.textContent || '';
 
-        // Table container
+        // Table container: use cell-by-cell & header voting so 1 Arabic column in an English table doesn't reverse columns
         if (tag === 'table') {
-            const targetDir = resolveElementDir(el, text) || 'ltr';
-            if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
+            const cells = el.querySelectorAll ? Array.from(el.querySelectorAll('th, td')) : [];
+            if (cells.length > 0) {
+                let rtlCells = 0;
+                let ltrCells = 0;
+                let rtlHeaders = 0;
+                let ltrHeaders = 0;
+                for (const cell of cells) {
+                    const cellDir = resolveElementDir(cell, cell.textContent || '');
+                    if (cellDir === 'rtl') {
+                        rtlCells++;
+                        if (cell.tagName.toLowerCase() === 'th') rtlHeaders++;
+                    } else if (cellDir === 'ltr') {
+                        ltrCells++;
+                        if (cell.tagName.toLowerCase() === 'th') ltrHeaders++;
+                    }
+                }
+                const targetDir = (rtlCells > ltrCells || (rtlCells > 0 && rtlHeaders > ltrHeaders)) ? 'rtl' : 'ltr';
+                if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
+            } else {
+                const targetDir = resolveElementDir(el, text) || 'ltr';
+                if (el.getAttribute('dir') !== targetDir) el.setAttribute('dir', targetDir);
+            }
             return;
         }
 
@@ -460,6 +508,10 @@
                     processSubtree(node);
                     const parentList = node.closest && node.closest('ul, ol');
                     if (parentList) applyRtlToElement(parentList);
+                    const parentTable = node.closest && node.closest('table');
+                    if (parentTable) applyRtlToElement(parentTable);
+                    const parentBox = node.closest && node.closest('blockquote, .markdown-alert, div[class*="border-l"]');
+                    if (parentBox) applyRtlToElement(parentBox);
                 } else if (node.nodeType === 3 && node.parentElement) {
                     const codeEl = node.parentElement.closest('code, pre');
                     if (codeEl) applyRtlToElement(codeEl);
@@ -469,6 +521,8 @@
                     if (list) applyRtlToElement(list);
                     const tbl = node.parentElement.closest('table');
                     if (tbl) applyRtlToElement(tbl);
+                    const box = node.parentElement.closest('blockquote, .markdown-alert, div[class*="border-l"]');
+                    if (box) applyRtlToElement(box);
                 }
             }
         };

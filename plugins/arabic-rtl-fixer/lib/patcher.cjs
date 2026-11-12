@@ -23,7 +23,7 @@ let fs = nodeFs;
 try { fs = require('original-fs'); } catch (_) { /* plain Node */ }
 
 const MARKER_PREFIX = '/* === ANTIGRAVITY_RTL_BIDI_FIX_';
-const MARKER = '/* === ANTIGRAVITY_RTL_BIDI_FIX_V5 === */';
+const MARKER = '/* === ANTIGRAVITY_RTL_BIDI_FIX_V6 === */';
 const INJECTION_CODE = nodeFs.readFileSync(path.join(__dirname, 'injection.js'), 'utf8');
 
 if (!INJECTION_CODE.includes(MARKER)) {

@@ -1,32 +1,70 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
   <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1E293B"/>
-      <stop offset="100%" stop-color="#0F172A"/>
+    <!-- Deep obsidian base + diagonal ambient wash from user's plugin brand palette -->
+    <linearGradient id="tileBg" x1="8" y1="8" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#190C05"/>
+      <stop offset="48%" stop-color="#090B12"/>
+      <stop offset="100%" stop-color="#07112B"/>
     </linearGradient>
-    <linearGradient id="rtlGrad" x1="104" y1="36" x2="24" y2="36" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#10B981"/>
-      <stop offset="100%" stop-color="#34D399"/>
+
+    <!-- Diagonal light-beam prism wash clipped inside the tile -->
+    <linearGradient id="beamGlow" x1="0" y1="128" x2="128" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6A00" stop-opacity="0.22"/>
+      <stop offset="45%" stop-color="#FFF5EA" stop-opacity="0.06"/>
+      <stop offset="65%" stop-color="#58B8FF" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#1A6BFF" stop-opacity="0.24"/>
     </linearGradient>
-    <linearGradient id="ltrGrad" x1="24" y1="92" x2="104" y2="92" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3B82F6"/>
-      <stop offset="100%" stop-color="#60A5FA"/>
+
+    <!-- Subtle glass rim highlight -->
+    <linearGradient id="rimStroke" x1="12" y1="8" x2="116" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF9A3C" stop-opacity="0.45"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#4DB2FF" stop-opacity="0.45"/>
     </linearGradient>
+
+    <!-- RTL Flow (Warm Solar Amber -> Gold -> Cream) -->
+    <linearGradient id="rtlBeam" x1="28" y1="40" x2="100" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFE6C7"/>
+      <stop offset="45%" stop-color="#FFA733"/>
+      <stop offset="100%" stop-color="#FF5E00"/>
+    </linearGradient>
+
+    <!-- Center BiDi Pivot (Warm White -> Ice Silver) -->
+    <linearGradient id="centerBeam" x1="40" y1="64" x2="88" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFF3E2"/>
+      <stop offset="50%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#BEE4FF"/>
+    </linearGradient>
+
+    <!-- LTR Flow (Ice White -> Sky Blue -> Electric Blue) -->
+    <linearGradient id="ltrBeam" x1="28" y1="88" x2="100" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E74FF"/>
+      <stop offset="55%" stop-color="#56BEFF"/>
+      <stop offset="100%" stop-color="#E5F4FF"/>
+    </linearGradient>
+
+    <clipPath id="tileClip">
+      <rect x="6" y="6" width="116" height="116" rx="28"/>
+    </clipPath>
   </defs>
 
-  <!-- Rounded App Tile -->
-  <rect x="6" y="6" width="116" height="116" rx="26" fill="url(#bgGrad)" stroke="#334155" stroke-width="2.5"/>
+  <!-- Base Tile -->
+  <g clip-path="url(#tileClip)">
+    <rect x="6" y="6" width="116" height="116" rx="28" fill="url(#tileBg)"/>
+    <rect x="6" y="6" width="116" height="116" rx="28" fill="url(#beamGlow)"/>
+  </g>
+  <rect x="6.75" y="6.75" width="114.5" height="114.5" rx="27.25" stroke="url(#rimStroke)" stroke-width="1.5"/>
 
-  <!-- Top RTL Flow Arrow (Right to Left) -->
-  <path d="M98 40H34M34 40L46 28M34 40L46 52" stroke="url(#rtlGrad)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Arabic Letter Dhad / Ain stylized glyph accent on right -->
-  <text x="86" y="31" font-family="Segoe UI, Tahoma, sans-serif" font-weight="700" font-size="18" fill="#10B981" text-anchor="middle">ع</text>
+  <!-- Precision BiDi Geometry (no text elements, razor-sharp at 16px-128px) -->
+  <!-- Upper: RTL Flow (Right-to-Left) -->
+  <path d="M94 41 H36 M36 41 L50 27 M36 41 L50 55"
+        stroke="url(#rtlBeam)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
 
-  <!-- Center Divider / Paragraph Alignment Lines -->
-  <line x1="48" y1="64" x2="98" y2="64" stroke="#64748B" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="36" cy="64" r="3" fill="#94A3B8"/>
+  <!-- Middle: BiDi Axis Divider -->
+  <line x1="44" y1="64" x2="84" y2="64"
+        stroke="url(#centerBeam)" stroke-width="7.5" stroke-linecap="round"/>
 
-  <!-- Bottom LTR Flow Arrow (Left to Right) -->
-  <path d="M30 88H94M94 88L82 76M94 88L82 100" stroke="url(#ltrGrad)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="42" y="107" font-family="Segoe UI, Inter, sans-serif" font-weight="700" font-size="14" fill="#60A5FA" text-anchor="middle">EN</text>
+  <!-- Lower: LTR Flow (Left-to-Right) -->
+  <path d="M34 87 H92 M92 87 L78 73 M92 87 L78 101"
+        stroke="url(#ltrBeam)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
