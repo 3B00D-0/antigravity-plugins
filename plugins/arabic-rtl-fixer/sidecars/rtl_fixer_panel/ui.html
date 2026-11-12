@@ -235,6 +235,60 @@
     }
     .update-actions { display: flex; align-items: center; gap: 6px; flex: none; }
 
+    /* Clean minimalist Automation toggle rows inside Updates card */
+    .auto-list {
+      border-top: 1px solid var(--_line);
+      padding: 8px 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      background: color-mix(in srgb, var(--_fg) 1.5%, transparent);
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+      color: var(--_fg-2);
+    }
+    .toggle-row:hover { color: var(--_fg); }
+    .switch {
+      position: relative;
+      width: 30px;
+      height: 17px;
+      flex: none;
+      appearance: none;
+      -webkit-appearance: none;
+      border-radius: 999px;
+      background: var(--_press);
+      border: 1px solid var(--_card-border);
+      cursor: pointer;
+      transition: background-color 0.14s ease, border-color 0.14s ease;
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--_fg-muted);
+      transition: transform 0.14s ease, background-color 0.14s ease;
+    }
+    .switch:checked {
+      background: var(--_primary);
+      border-color: transparent;
+    }
+    .switch:checked::after {
+      transform: translateX(13px);
+      background: var(--_primary-fg);
+    }
+    .switch:disabled { opacity: 0.45; cursor: default; }
+
     /* Capsule status pills */
     .pill {
       display: inline-flex;
@@ -441,6 +495,16 @@
           </button>
         </div>
       </div>
+      <div class="auto-list">
+        <label class="toggle-row">
+          <span>Auto-reapply after Antigravity updates</span>
+          <input class="switch" type="checkbox" id="opt-auto-reapply" checked />
+        </label>
+        <label class="toggle-row">
+          <span>Auto-update plugin from GitHub</span>
+          <input class="switch" type="checkbox" id="opt-auto-update" checked />
+        </label>
+      </div>
     </section>
 
     <div class="msg" id="msg"></div>
@@ -487,8 +551,14 @@
     });
     syncThemeMode(getComputedStyle(document.documentElement).getPropertyValue('--background'));
 
-    async function api(path, method = 'GET') {
-      const res = await fetch(path, { method, headers: token ? { 'X-Sidecar-Token': token } : {} });
+    async function api(path, method = 'GET', body = null) {
+      const headers = token ? { 'X-Sidecar-Token': token } : {};
+      const opts = { method, headers };
+      if (body !== null) {
+        headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const res = await fetch(path, opts);
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
       return data;
@@ -569,7 +639,19 @@
         restoreBtn.disabled = true;
       }
 
-      if (s.error || s.lastError) showMsg(s.error || s.lastError, 'err');
+      if (s.settings) {
+        $('opt-auto-reapply').checked = s.settings.autoReapply !== false;
+        $('opt-auto-update').checked = s.settings.autoUpdate !== false;
+        if (s.settings.lastAutoUpdate && s.settings.lastAutoUpdate.to === s.pluginVersion) {
+          setPill($('update-pill'), `Auto-updated v${s.pluginVersion}`, 'ok');
+        }
+      }
+
+      if (s.error || s.lastError) {
+        showMsg(s.error || s.lastError, 'err');
+      } else if (s.autoPatchedNotice) {
+        showMsg(s.autoPatchedNotice, 'ok');
+      }
     }
 
     async function refreshStatus() {
@@ -626,6 +708,21 @@
         showMsg(`Updated to v${r.version}. Restart Antigravity to load the new version.`, 'ok');
       } catch (err) { showMsg('Update failed: ' + err.message, 'err'); }
     }));
+
+    async function saveToggle(patch, el) {
+      el.disabled = true;
+      try {
+        renderStatus(await api('/api/settings', 'POST', patch));
+        if (patch.autoUpdate === true) checkUpdates().catch(() => {});
+      } catch (err) {
+        showMsg(err.message, 'err');
+      } finally {
+        el.disabled = false;
+      }
+    }
+
+    $('opt-auto-reapply').addEventListener('change', (e) => saveToggle({ autoReapply: e.target.checked }, e.target));
+    $('opt-auto-update').addEventListener('change', (e) => saveToggle({ autoUpdate: e.target.checked }, e.target));
 
     refreshStatus();
     checkUpdates().catch(() => {});

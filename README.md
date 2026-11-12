@@ -21,7 +21,7 @@
 
 | Plugin | Version | Platforms | Summary |
 | :--- | :---: | :---: | :--- |
-| <img src="plugins/arabic-rtl-fixer/assets/logo.svg" width="18" align="absmiddle" alt="" /> **[arabic-rtl-fixer](plugins/arabic-rtl-fixer/README.md)** | `v1.4.5` | Windows · Linux / Omarchy · macOS | Native RTL/BiDi rendering for Arabic, Hebrew, and Persian prose, lists, tables, and callouts — plus an integrated Antigravity sidecar panel. |
+| <img src="plugins/arabic-rtl-fixer/assets/logo.svg" width="18" align="absmiddle" alt="" /> **[arabic-rtl-fixer](plugins/arabic-rtl-fixer/README.md)** | `v1.5.0` | Windows · Linux / Omarchy · macOS | Native RTL/BiDi rendering for Arabic, Hebrew, and Persian prose, lists, tables, and callouts — plus a self-updating Antigravity sidecar panel. |
 
 ---
 

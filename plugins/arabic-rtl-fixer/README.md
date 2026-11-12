@@ -9,7 +9,7 @@
     <a href="../../README.md">All Plugins</a>
   </p>
   <p>
-    <img src="https://img.shields.io/badge/Version-v1.4.5-18181b?style=flat-square" alt="Version v1.4.5" />
+    <img src="https://img.shields.io/badge/Version-v1.5.0-18181b?style=flat-square" alt="Version v1.5.0" />
     <img src="https://img.shields.io/badge/Antigravity-2.0%2B-18181b?style=flat-square" alt="Antigravity 2.0+" />
     <img src="https://img.shields.io/badge/OS-Windows%20%7C%20Linux%20%7C%20macOS-18181b?style=flat-square" alt="Windows, Linux, macOS" />
   </p>
