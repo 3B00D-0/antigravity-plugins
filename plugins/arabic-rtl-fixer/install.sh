@@ -9,7 +9,7 @@ LIB_DIR="${PLUGIN_DIR}/lib"
 
 echo ""
 echo "================================================================"
-echo "   Antigravity 2.0 - Arabic / RTL Formatting Fix (Linux/Arch)   "
+echo "   Antigravity 2.0 - Arabic / RTL Formatting Fix (Linux / macOS)"
 echo "================================================================"
 echo ""
 
@@ -67,7 +67,7 @@ run_patcher() {
         runner=(node "${PATCH_JS}")
     else
         local agy_bin=""
-        for cand in /opt/antigravity/antigravity /opt/Antigravity/antigravity /usr/lib/antigravity/antigravity "${HOME}/.local/share/antigravity/antigravity"; do
+        for cand in /opt/antigravity/antigravity /opt/Antigravity/antigravity /usr/lib/antigravity/antigravity "${HOME}/.local/share/antigravity/antigravity" "/Applications/Antigravity.app/Contents/MacOS/Antigravity" "${HOME}/Applications/Antigravity.app/Contents/MacOS/Antigravity"; do
             if [[ -x "${cand}" ]]; then
                 agy_bin="${cand}"
                 break

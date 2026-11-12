@@ -42,20 +42,22 @@ function sha256(buf) {
 
 function findAsarInDir(dir) {
     if (!dir) return null;
-    const nested = path.join(dir, 'resources', 'app.asar');
-    if (fs.existsSync(nested)) return { appDir: dir, asar: nested };
-    const flat = path.join(dir, 'app.asar');
-    if (fs.existsSync(flat)) return { appDir: dir, asar: flat };
+    for (const rel of [['resources', 'app.asar'], ['Contents', 'Resources', 'app.asar'], ['app.asar']]) {
+        const candidate = path.join(dir, ...rel);
+        if (fs.existsSync(candidate)) return { appDir: dir, asar: candidate };
+    }
     return null;
 }
 
 function findExeInDir(dir) {
     if (!dir) return null;
-    const names = process.platform === 'win32'
-        ? ['Antigravity.exe']
-        : ['antigravity', 'Antigravity', 'antigravity-bin'];
-    for (const name of names) {
-        const candidate = path.join(dir, name);
+    const rels = process.platform === 'win32'
+        ? [['Antigravity.exe']]
+        : process.platform === 'darwin'
+            ? [['Contents', 'MacOS', 'Antigravity'], ['Antigravity'], ['antigravity']]
+            : [['antigravity'], ['Antigravity'], ['antigravity-bin']];
+    for (const rel of rels) {
+        const candidate = path.join(dir, ...rel);
         try {
             const st = fs.statSync(candidate);
             if (st.isFile() && st.size > 1024 * 1024) return candidate; // skip tiny shell wrappers
@@ -111,6 +113,11 @@ function findInstallation() {
             path.join(localAppData, 'antigravity'),
             path.join(programFiles, 'antigravity'),
             path.join(programFiles, 'Antigravity'),
+        );
+    } else if (process.platform === 'darwin') {
+        candidates.push(
+            '/Applications/Antigravity.app',
+            path.join(os.homedir(), 'Applications', 'Antigravity.app'),
         );
     } else {
         const home = os.homedir();

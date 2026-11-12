@@ -1,7 +1,7 @@
 # <img src="plugins/arabic-rtl-fixer/assets/logo.svg" width="32" height="32" align="absmiddle" alt="Logo" /> antigravity-plugins
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-0078D6?logo=linux)](https://github.com/3B00D-0/antigravity-plugins)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D6)](https://github.com/3B00D-0/antigravity-plugins)
 [![Target](https://img.shields.io/badge/Antigravity-2.0%2B-10B981)](https://github.com/3B00D-0/antigravity-plugins)
 
 A curated monorepo of plugins, UI patches, and sidecar extensions for the **Google Antigravity 2.0** desktop client.
@@ -12,7 +12,7 @@ A curated monorepo of plugins, UI patches, and sidecar extensions for the **Goog
 
 | Plugin | Version | Description | Install |
 | :--- | :---: | :--- | :--- |
-| <img src="plugins/arabic-rtl-fixer/assets/logo.svg" width="22" align="absmiddle" /> **[arabic-rtl-fixer](plugins/arabic-rtl-fixer)** | `1.4.4` | Fixes mixed Arabic & English (RTL/LTR) bidirectional text rendering, list markers, and parentheses in Antigravity 2.0. | [Docs](plugins/arabic-rtl-fixer/README.md) |
+| <img src="plugins/arabic-rtl-fixer/assets/logo.svg" width="22" align="absmiddle" /> **[arabic-rtl-fixer](plugins/arabic-rtl-fixer)** | `1.4.5` | Fixes mixed Arabic & English (RTL/LTR) bidirectional text rendering, list markers, and parentheses in Antigravity 2.0. | [Docs](plugins/arabic-rtl-fixer/README.md) |
 
 ---
 
@@ -32,12 +32,12 @@ Fixes bidirectional (RTL/LTR) text rendering for Arabic, Hebrew, and Persian ins
 irm https://raw.githubusercontent.com/3B00D-0/antigravity-plugins/main/plugins/arabic-rtl-fixer/install.ps1 | iex
 ```
 
-**Linux / Arch / Omarchy (Bash):**
+**Linux / Arch / Omarchy / macOS (Bash):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/3B00D-0/antigravity-plugins/main/plugins/arabic-rtl-fixer/install.sh | bash
 ```
 
-*(Root dispatchers also available: `install.ps1` for Windows, `install.sh` for Linux)*
+*(Root dispatchers also available: `install.ps1` for Windows, `install.sh` for Linux / macOS)*
 
 ---
 

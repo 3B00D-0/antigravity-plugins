@@ -244,6 +244,11 @@ def _find_asar_and_exe():
             os.path.join(program_files, "antigravity"),
             os.path.join(program_files, "Antigravity"),
         ])
+    elif sys.platform == "darwin":
+        candidates.extend([
+            "/Applications/Antigravity.app",
+            os.path.expanduser("~/Applications/Antigravity.app"),
+        ])
     else:
         candidates.extend([
             "/opt/antigravity",
@@ -257,7 +262,7 @@ def _find_asar_and_exe():
         ])
 
     for c in candidates:
-        for asar_rel in (("resources", "app.asar"), ("app.asar",)):
+        for asar_rel in (("resources", "app.asar"), ("Contents", "Resources", "app.asar"), ("app.asar",)):
             asar = os.path.join(c, *asar_rel)
             if os.path.exists(asar):
                 return c, asar, _find_exe(c)
@@ -266,9 +271,14 @@ def _find_asar_and_exe():
 
 
 def _find_exe(app_dir):
-    names = ["Antigravity.exe"] if os.name == "nt" else ["antigravity", "Antigravity", "antigravity-bin"]
-    for name in names:
-        cand = os.path.join(app_dir, name)
+    if os.name == "nt":
+        rels = [("Antigravity.exe",)]
+    elif sys.platform == "darwin":
+        rels = [("Contents", "MacOS", "Antigravity"), ("Antigravity",), ("antigravity",)]
+    else:
+        rels = [("antigravity",), ("Antigravity",), ("antigravity-bin",)]
+    for rel in rels:
+        cand = os.path.join(app_dir, *rel)
         if os.path.isfile(cand) and os.path.getsize(cand) > 1024 * 1024:
             return cand
     return None
