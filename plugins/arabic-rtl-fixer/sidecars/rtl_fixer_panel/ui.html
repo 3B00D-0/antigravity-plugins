@@ -1,204 +1,367 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arabic / RTL Formatting Fix</title>
-  <!-- Antigravity sidecar bridge: applies the host theme's CSS variables. -->
+  <script>
+    // Apply theme attribute before first paint to match host without flash
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches && !document.documentElement.dataset.theme) {
+      document.documentElement.dataset.theme = 'light';
+    }
+  </script>
+  <!-- Antigravity sidecar bridge: syncs host CSS variables & window.sidecar -->
   <script src="/preload.js"></script>
   <style>
-    /* Native Antigravity 2.0 Dark Theme Defaults (prevents white flash/glitch) */
-    :root {
+    /* Neo Antigravity 2.x Design Tokens (tracks host --background, --card, --primary, etc.) */
+    :root,
+    :root[data-theme="dark"] {
       color-scheme: dark;
-      --background: #101010;
-      --foreground: #cccccc;
-      --card: #141414;
-      --border: rgba(255, 255, 255, 0.08);
-      --primary: #007acc;
-      --primary-foreground: #ffffff;
-      --secondary: #282828;
-      --secondary-foreground: #cccccc;
-      --muted: #1c1c1c;
-      --muted-foreground: #888888;
-      --error: #f14c4c;
-      --success: #3fb950;
-      --warning: #d29922;
-
-      --_bg: var(--background, #101010);
-      --_fg: var(--foreground, #cccccc);
-      --_card: var(--card, color-mix(in srgb, #ffffff 5%, #101010));
-      --_border: var(--border, rgba(255, 255, 255, 0.08));
-      --_primary: var(--primary, #007acc);
+      --_bg: var(--background, #101114);
+      --_fg: var(--foreground, #e6e8ec);
+      --_fg-2: var(--secondary-foreground, #c4c8d0);
+      --_fg-muted: var(--muted-foreground, #8e959f);
+      --_fg-faint: var(--placeholder, #646b75);
+      --_card: var(--card, color-mix(in srgb, var(--_bg) 88%, #ffffff));
+      --_card-border: var(--card-border, var(--border, rgba(255, 255, 255, 0.08)));
+      --_line: color-mix(in srgb, var(--_fg) 8%, transparent);
+      --_fill: color-mix(in srgb, var(--_fg) 6.5%, transparent);
+      --_hover: color-mix(in srgb, var(--_fg) 7%, transparent);
+      --_press: color-mix(in srgb, var(--_fg) 12%, transparent);
+      --_primary: var(--primary, #3a6ff7);
       --_primary-fg: var(--primary-foreground, #ffffff);
-      --_secondary: var(--secondary, color-mix(in srgb, #ffffff 12%, #101010));
-      --_secondary-fg: var(--secondary-foreground, color-mix(in srgb, #cccccc 75%, #101010));
-      --_muted: var(--muted, color-mix(in srgb, #ffffff 2.5%, #101010));
-      --_muted-fg: var(--muted-foreground, color-mix(in srgb, #cccccc 50%, #101010));
-      --_error: var(--error, #f14c4c);
-      --_success: #3fb950;
-      --_warning: #d29922;
+      --_secondary: var(--secondary, color-mix(in srgb, var(--_fg) 10%, var(--_bg)));
+      --_ring: color-mix(in srgb, var(--_primary) 70%, transparent);
+
+      --_ok: #7aae66;
+      --_ok-soft: color-mix(in srgb, var(--_ok) 15%, transparent);
+      --_warn: #cab43e;
+      --_warn-soft: color-mix(in srgb, var(--_warn) 16%, transparent);
+      --_bad: var(--error, #ff6b6b);
+      --_bad-soft: color-mix(in srgb, var(--_bad) 15%, transparent);
+
+      --_font: var(--font-family, "Google Sans Flex", "Google Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+      --_mono: var(--editor-font-family, "Google Sans Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+      --r-sm: 4px;
+      --r-md: 6px;
+      --r-lg: 10px;
     }
 
-    * { box-sizing: border-box; }
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --_bg: var(--background, #f7f7f8);
+      --_fg: var(--foreground, #1d1f21);
+      --_fg-2: var(--secondary-foreground, #3d4348);
+      --_fg-muted: var(--muted-foreground, #5d676f);
+      --_fg-faint: var(--placeholder, #9da5ab);
+      --_card: var(--card, #ffffff);
+      --_card-border: var(--card-border, var(--border, rgba(0, 0, 0, 0.1)));
+      --_secondary: var(--secondary, #e6e7e9);
+      --_ok: #188038;
+      --_warn: #b06000;
+      --_bad: var(--error, #cb3d3d);
+    }
+
+    * {
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--_fg) 20%, transparent) transparent;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--_fg) 18%, transparent);
+      border: 3px solid transparent;
+      background-clip: padding-box;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-track { background: transparent; }
     [hidden] { display: none !important; }
+    :focus { outline: none; }
+    :focus-visible { outline: 2px solid var(--_ring); outline-offset: 2px; }
 
-    html {
-      color-scheme: dark;
-      background-color: #101010 !important;
-      background: var(--_bg) !important;
-      color: var(--_fg) !important;
-    }
-
-    body {
+    html, body {
       margin: 0 !important;
       padding: 0 !important;
-      color-scheme: dark;
-      background-color: #101010 !important;
       background: var(--_bg) !important;
       color: var(--_fg) !important;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--_font);
       font-size: 13px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Sticky monochrome Neo header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--_bg);
+      border-bottom: 1px solid var(--_line);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header img {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      flex-shrink: 0;
+    }
+    .header .titles { min-width: 0; flex: 1; }
+    .header h1 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header .sub {
+      color: var(--_fg-muted);
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
     }
 
     .page {
-      padding: 16px;
+      padding: 14px 16px 28px;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      max-width: 640px;
-      background-color: var(--_bg);
+      max-width: 680px;
+      margin: 0 auto;
     }
 
-    /* Header */
-    .header { display: flex; align-items: center; gap: 10px; }
-    .header img { width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0; }
-    .header .titles { min-width: 0; flex: 1; }
-    .header h1 { margin: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .header .sub { color: var(--_muted-fg); font-size: 12px; }
-
-    /* Card (rounded-lg, bg-card, border-border) */
+    /* Neo Cards (rounded-lg / 10px, card-border) */
     .card {
       background: var(--_card);
-      border: 1px solid var(--_border);
-      border-radius: 8px;
-      padding: 12px;
+      border: 1px solid var(--_card-border);
+      border-radius: var(--r-lg);
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .card-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .card-title h2 { margin: 0; font-size: 13px; font-weight: 600; }
-    .desc { margin: 0; color: var(--_muted-fg); font-size: 12px; }
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 22px;
+    }
+    .card-head h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--_fg);
+    }
+    .desc {
+      margin: 0;
+      color: var(--_fg-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
 
-    /* Key/value rows */
-    .rows { display: flex; flex-direction: column; gap: 6px; }
-    .row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
-    .row .k { color: var(--_muted-fg); }
-    .row .v { color: var(--_fg); font-variant-numeric: tabular-nums; text-align: right; }
+    /* Metadata rows */
+    .rows {
+      display: flex;
+      flex-direction: column;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 5px 0;
+      font-size: 12px;
+      border-top: 1px solid var(--_line);
+    }
+    .row:first-child { border-top: none; padding-top: 0; }
+    .row:last-child { padding-bottom: 0; }
+    .row .k { color: var(--_fg-muted); }
+    .row .v {
+      color: var(--_fg);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 65%;
+    }
+    .row .v.mono { font-family: var(--_mono); font-size: 11.5px; color: var(--_fg-2); }
 
-    /* Status pill */
+    /* Neo capsule pills with optional pulsing live indicator */
     .pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      height: 22px; padding: 0 8px; border-radius: 6px;
-      font-size: 12px; font-weight: 500; white-space: nowrap;
-      background: var(--_secondary); color: var(--_secondary-fg);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      background: var(--_fill);
+      color: var(--_fg-muted);
     }
-    .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-    .pill.ok { color: var(--_success); background: color-mix(in srgb, var(--_success) 14%, transparent); }
-    .pill.warn { color: var(--_warning); background: color-mix(in srgb, var(--_warning) 14%, transparent); }
-    .pill.err { color: var(--_error); background: color-mix(in srgb, var(--_error) 14%, transparent); }
+    .pill .dot {
+      position: relative;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      flex: none;
+    }
+    .pill.ok { color: var(--_ok); background: var(--_ok-soft); }
+    .pill.ok.live .dot::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: inherit;
+      opacity: 0.55;
+      animation: ping 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    }
+    @keyframes ping {
+      0% { transform: scale(1); opacity: 0.55; }
+      70%, 100% { transform: scale(2.6); opacity: 0; }
+    }
+    .pill.warn { color: var(--_warn); background: var(--_warn-soft); }
+    .pill.err { color: var(--_bad); background: var(--_bad-soft); }
 
-    /* Buttons: same tokens as Antigravity's <Button size="sm"> (h-7, rounded-md, px-2.5, font-medium) */
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    /* Neo Toolkit Buttons (h-7 / 28px, rounded-md / 6px, font-medium) */
+    .actions { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      height: 28px; padding: 0 10px; border-radius: 6px;
-      font: inherit; font-size: 13px; font-weight: 500;
-      border: none; cursor: pointer; user-select: none; outline: none;
-      transition: color .15s, background-color .15s, opacity .15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: var(--r-md);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1;
+      border: 1px solid transparent;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: color .12s ease, background-color .12s ease, border-color .12s ease, opacity .12s ease;
     }
-    .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-    .btn:disabled { opacity: .5; pointer-events: none; }
-    .btn:focus-visible { box-shadow: 0 0 0 2px var(--_primary); }
-    .btn-primary { background: var(--_primary); color: var(--_primary-fg); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
-    .btn-primary:hover { opacity: .9; }
-    .btn-secondary { background: var(--_secondary); color: var(--_secondary-fg); }
-    .btn-secondary:hover { color: var(--_fg); }
-    .btn-outline { background: transparent; color: var(--_secondary-fg); border: 1px solid var(--_border); }
-    .btn-outline:hover { color: var(--_fg); background: var(--_secondary); }
+    .btn svg { width: 14px; height: 14px; flex: none; stroke-width: 1.75; }
+    .btn:disabled { opacity: 0.45; pointer-events: none; }
+    .btn-primary {
+      background: var(--_primary);
+      color: var(--_primary-fg);
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary {
+      background: var(--_secondary);
+      color: var(--_fg-2);
+    }
+    .btn-secondary:hover { color: var(--_fg); background: var(--_press); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--_fg-muted);
+      border-color: var(--_card-border);
+    }
+    .btn-ghost:hover { color: var(--_fg); background: var(--_hover); }
     .btn.busy svg { animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Inline message */
-    .msg { display: none; font-size: 12px; padding: 8px 10px; border-radius: 6px; background: var(--_muted); border: 1px solid var(--_border); }
+    /* Status banner */
+    .msg {
+      display: none;
+      font-size: 12px;
+      padding: 8px 11px;
+      border-radius: 8px;
+      background: var(--_fill);
+      border: 1px solid var(--_card-border);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     .msg.show { display: block; }
-    .msg.err { color: var(--_error); }
-    .msg.ok { color: var(--_success); }
+    .msg.err { color: var(--_bad); border-color: color-mix(in srgb, var(--_bad) 35%, transparent); background: var(--_bad-soft); }
+    .msg.ok { color: var(--_ok); border-color: color-mix(in srgb, var(--_ok) 35%, transparent); background: var(--_ok-soft); }
 
-    /* Preview */
+    /* Inset preview container (sunken fill) */
     .preview {
-      background: var(--_muted);
-      border: 1px solid var(--_border);
-      border-radius: 6px;
+      background: var(--_fill);
+      border: 1px solid var(--_line);
+      border-radius: 8px;
       padding: 10px 12px;
-      direction: rtl; text-align: right; unicode-bidi: plaintext;
-      font-size: 13px;
+      direction: rtl;
+      text-align: right;
+      unicode-bidi: isolate;
+      font-size: 12.5px;
+      line-height: 1.55;
     }
     .preview p { margin: 0 0 6px; font-weight: 600; }
     .preview ul { margin: 0; padding-right: 18px; padding-left: 0; }
     .preview li { margin: 2px 0; }
     .preview code {
-      direction: ltr; unicode-bidi: isolate; display: inline-block;
-      font-family: var(--editor-font-family, ui-monospace, "Cascadia Code", Consolas, monospace);
-      font-size: 12px; padding: 0 4px; border-radius: 4px; background: var(--_secondary);
+      direction: ltr;
+      unicode-bidi: isolate;
+      display: inline-block;
+      font-family: var(--_mono);
+      font-size: 11.5px;
+      padding: 1px 5px;
+      border-radius: var(--r-sm);
+      background: var(--_secondary);
+      color: var(--code-foreground, var(--_fg));
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header class="header">
-      <img src="/logo.svg" alt="" />
-      <div class="titles">
-        <h1>Arabic / RTL Formatting Fix</h1>
-        <div class="sub" id="plugin-version">Plugin</div>
-      </div>
-      <span class="pill" id="status-pill">Checking</span>
-    </header>
+  <header class="header">
+    <img src="/logo.svg" alt="" />
+    <div class="titles">
+      <h1>Arabic / RTL Formatting Fix</h1>
+      <div class="sub" id="plugin-version">Plugin</div>
+    </div>
+    <span class="pill" id="status-pill"><span class="dot"></span><span>Checking</span></span>
+  </header>
 
+  <main class="page">
     <section class="card">
-      <div class="card-title"><h2>Patch</h2></div>
+      <div class="card-head">
+        <h2>Patch Status</h2>
+        <span class="pill" id="platform-pill" hidden><span class="dot"></span><span id="platform-label">OS</span></span>
+      </div>
       <div class="rows">
-        <div class="row"><span class="k">Status</span><span class="v" id="row-status">-</span></div>
+        <div class="row"><span class="k">State</span><span class="v" id="row-status">-</span></div>
         <div class="row"><span class="k">Antigravity</span><span class="v" id="row-app">-</span></div>
         <div class="row"><span class="k">Backup</span><span class="v" id="row-backup">-</span></div>
+        <div class="row"><span class="k">Install Path</span><span class="v mono" id="row-dir">-</span></div>
       </div>
       <div class="actions">
         <button class="btn btn-primary" id="btn-apply">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
           Re-apply
         </button>
-        <button class="btn btn-outline" id="btn-restore">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+        <button class="btn btn-ghost" id="btn-restore">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
           Restore original
         </button>
       </div>
     </section>
 
     <section class="card">
-      <div class="card-title">
+      <div class="card-head">
         <h2>Updates</h2>
-        <span class="pill" id="update-pill" hidden>Up to date</span>
+        <span class="pill" id="update-pill" hidden><span class="dot"></span><span>Up to date</span></span>
       </div>
       <p class="desc" id="update-desc">Check GitHub for a newer version of this plugin.</p>
       <div class="actions">
         <button class="btn btn-secondary" id="btn-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
           Check for updates
         </button>
         <button class="btn btn-primary" id="btn-update" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
           Update
         </button>
       </div>
@@ -207,23 +370,42 @@
     <div class="msg" id="msg"></div>
 
     <section class="card">
-      <div class="card-title"><h2>Preview</h2></div>
+      <div class="card-head"><h2>BiDi Preview</h2></div>
       <div class="preview" dir="rtl">
         <p>1. نظرة عامة على معمارية النظام (System Architecture):</p>
         <ul>
-          <li>يعتمد التطبيق على واجهة برمجية (REST API) مبنية باستخدام <code>Node.js</code>.</li>
-          <li>مزامنة البيانات عبر (WebSockets) لتقليل زمن الاستجابة بنسبة 60% إلى 80%.</li>
-          <li>تبقى الأكواد البرمجية دائماً من اليسار إلى اليمين <code>direction: ltr</code>.</li>
+          <li><code>1. Backend API</code> → يعتمد على واجهة برمجية مبنية بـ <code>Node.js</code>.</li>
+          <li>مزامنة البيانات عبر <code>WebSockets</code> بنسبة 60% إلى 80%.</li>
+          <li>تبقى الأكواد دائماً من اليسار إلى اليمين <code>direction: ltr</code>.</li>
         </ul>
       </div>
     </section>
-  </div>
+  </main>
 
   <script>
-    // When loaded through the iframe bridge the real URL is in window.__SIDECAR_URL.
     const pageUrl = new URL(window.__SIDECAR_URL || window.location.href);
     const token = pageUrl.searchParams.get('token') || '';
     const $ = (id) => document.getElementById(id);
+
+    // Sync light/dark data-theme dynamically when host pushes theme-change
+    function syncThemeMode(bg) {
+      if (!bg) return;
+      const m = bg.match(/\d+/g);
+      let light = false;
+      if (m && m.length >= 3) {
+        light = (0.2126 * Number(m[0]) + 0.7152 * Number(m[1]) + 0.0722 * Number(m[2])) / 255 > 0.5;
+      } else if (/^#[0-9a-f]{6}$/i.test(bg.trim())) {
+        const h = bg.trim();
+        light = (0.2126 * parseInt(h.slice(1,3),16) + 0.7152 * parseInt(h.slice(3,5),16) + 0.0722 * parseInt(h.slice(5,7),16)) / 255 > 0.5;
+      }
+      document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+    }
+
+    window.addEventListener('message', (e) => {
+      const bg = e.data?.type === 'theme-change' ? e.data.payload?.cssVariables?.['--background'] : null;
+      if (bg) syncThemeMode(bg);
+    });
+    syncThemeMode(getComputedStyle(document.documentElement).getPropertyValue('--background'));
 
     async function api(path, method = 'GET') {
       const res = await fetch(path, { method, headers: token ? { 'X-Sidecar-Token': token } : {} });
@@ -232,9 +414,10 @@
       return data;
     }
 
-    function setPill(el, text, kind) {
-      el.textContent = text;
-      el.className = 'pill' + (kind ? ' ' + kind : '');
+    function setPill(el, text, kind, live = false) {
+      el.className = 'pill' + (kind ? ' ' + kind : '') + (live ? ' live' : '');
+      const label = el.querySelector('span:last-child') || el;
+      label.textContent = text;
       el.hidden = false;
     }
 
@@ -250,12 +433,25 @@
       try { await fn(); } finally { btn.disabled = false; btn.classList.remove('busy'); }
     }
 
+    function formatPlatform(p) {
+      if (p === 'win32') return 'Windows';
+      if (p === 'linux') return 'Linux / Omarchy';
+      if (p === 'darwin') return 'macOS';
+      return p || 'Unknown';
+    }
+
     function renderStatus(s) {
       $('plugin-version').textContent = s.pluginVersion ? `Plugin v${s.pluginVersion}` : 'Plugin';
       $('row-app').textContent = s.appVersion ? `v${s.appVersion}` : 'Not found';
       $('row-backup').textContent = s.hasBackup ? 'Available' : 'None';
+      $('row-dir').textContent = s.appDir || '-';
+      $('row-dir').title = s.appDir || '';
+
+      if (s.platform) {
+        setPill($('platform-pill'), formatPlatform(s.platform), '');
+      }
       if (s.installed) {
-        setPill($('status-pill'), 'Active', 'ok');
+        setPill($('status-pill'), 'Active', 'ok', true);
         $('row-status').textContent = 'Applied';
       } else if (s.outdated) {
         setPill($('status-pill'), 'Outdated', 'warn');

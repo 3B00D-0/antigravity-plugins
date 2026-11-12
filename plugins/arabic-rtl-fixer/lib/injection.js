@@ -1,4 +1,4 @@
-/* === ANTIGRAVITY_RTL_BIDI_FIX_V4 === */
+/* === ANTIGRAVITY_RTL_BIDI_FIX_V5 === */
 (() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
@@ -380,15 +380,31 @@
                 let html = await res.text();
                 const safeSrc = JSON.stringify(src).replace(/</g, '\\u003c');
 
-                // Extract host's active CSS variables so the sidecar matches instantly with no white flash
+                // Extract host's active CSS variables so the sidecar matches light/dark & Neo UI tokens immediately
                 const hostComputed = window.getComputedStyle(document.documentElement);
                 const themeKeys = [
-                    '--background', '--foreground', '--card', '--border',
+                    '--background', '--foreground', '--card', '--card-border', '--border',
                     '--primary', '--primary-foreground', '--secondary',
-                    '--secondary-foreground', '--muted', '--muted-foreground',
-                    '--error', '--success', '--warning'
+                    '--secondary-foreground', '--muted', '--muted-foreground', '--placeholder',
+                    '--error', '--success', '--warning', '--code-foreground',
+                    '--font-family', '--editor-font-family'
                 ];
-                let themeVars = ':root { color-scheme: dark; ';
+                const bgVal = hostComputed.getPropertyValue('--background')?.trim() || '';
+                const isLightBg = (() => {
+                    const rgb = bgVal.match(/\d+/g);
+                    if (rgb && rgb.length >= 3) {
+                        const lum = (0.2126 * Number(rgb[0]) + 0.7152 * Number(rgb[1]) + 0.0722 * Number(rgb[2])) / 255;
+                        return lum > 0.5;
+                    }
+                    if (/^#[0-9a-f]{6}$/i.test(bgVal)) {
+                        const r = parseInt(bgVal.slice(1, 3), 16);
+                        const g = parseInt(bgVal.slice(3, 5), 16);
+                        const b = parseInt(bgVal.slice(5, 7), 16);
+                        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.5;
+                    }
+                    return false;
+                })();
+                let themeVars = `:root { color-scheme: ${isLightBg ? 'light' : 'dark'}; `;
                 for (let i = 0; i < themeKeys.length; i++) {
                     const val = hostComputed.getPropertyValue(themeKeys[i])?.trim();
                     if (val) themeVars += `${themeKeys[i]}: ${val}; `;
@@ -397,7 +413,7 @@
 
                 const boot = `<base href="${url.protocol}//${url.host}/">` +
                     `<style id="agy-host-theme">${themeVars}</style>` +
-                    `<script>window.__SIDECAR_URL = ${safeSrc};</` + `script>`;
+                    `<script>document.documentElement.setAttribute('data-theme', '${isLightBg ? 'light' : 'dark'}'); window.__SIDECAR_URL = ${safeSrc};</` + `script>`;
                 html = /<head[^>]*>/i.test(html)
                     ? html.replace(/<head[^>]*>/i, (m) => m + boot)
                     : boot + html;
